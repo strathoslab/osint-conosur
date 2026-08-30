@@ -1,0 +1,6 @@
+{
+  "name": "OSINT Cono Sur - Inteligencia Estratégica Regional",
+  "description": "Sistema de Inteligencia de Fuentes Abiertas y monitoreo estratégico en tiempo real para Argentina, Chile, Uruguay, Brasil, Paraguay y Bolivia con generación de informes automatizados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
