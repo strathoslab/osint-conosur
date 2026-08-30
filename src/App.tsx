@@ -41,22 +41,57 @@ import {
   GeneratedReport,
   CommodityItem 
 } from './types';
+import { 
+  INITIAL_INTEL_ITEMS, 
+  CONO_SUR_COMMODITIES, 
+  STRATEGIC_NODES, 
+  COUNTRY_PROFILES, 
+  REGIONAL_SOURCES 
+} from './data/staticData';
+import { syncClientFeeds } from './utils/clientFeedCollector';
+import { generateClientReport, generateClientAnalystAnswer } from './utils/clientIntelligenceEngine';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'wire' | 'commodities' | 'geoint' | 'reports' | 'analyst' | 'sources'>('wire');
-  const [items, setItems] = useState<IntelItem[]>([]);
-  const [commodities, setCommodities] = useState<CommodityItem[]>([]);
-  const [nodes, setNodes] = useState<StrategicNode[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, CountryProfile>>({});
-  const [sources, setSources] = useState<SourceItem[]>([]);
-  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
+  
+  // Initialize with static fallback or saved localStorage data
+  const [items, setItems] = useState<IntelItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('osint_cono_sur_items');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return INITIAL_INTEL_ITEMS;
+  });
+
+  const [commodities, setCommodities] = useState<CommodityItem[]>(CONO_SUR_COMMODITIES);
+  const [nodes, setNodes] = useState<StrategicNode[]>(STRATEGIC_NODES);
+  const [profiles, setProfiles] = useState<Record<string, CountryProfile>>(COUNTRY_PROFILES);
+  const [sources, setSources] = useState<SourceItem[]>(REGIONAL_SOURCES as SourceItem[]);
+  
+  const [metrics, setMetrics] = useState<SystemMetrics>(() => ({
+    totalItems: INITIAL_INTEL_ITEMS.length,
+    criticalAlerts: INITIAL_INTEL_ITEMS.filter(i => i.level === 'CRITICAL').length,
+    activeSources: REGIONAL_SOURCES.length,
+    lastSync: new Date().toISOString(),
+    feedsOnline: REGIONAL_SOURCES.length,
+    geminiOperational: true
+  }));
   
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | 'ALL'>('ALL');
   const [selectedItemForDetail, setSelectedItemForDetail] = useState<IntelItem | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
-  const [historyReports, setHistoryReports] = useState<GeneratedReport[]>([]);
+  const [historyReports, setHistoryReports] = useState<GeneratedReport[]>(() => {
+    try {
+      const saved = localStorage.getItem('osint_cono_sur_reports');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'info') => {
@@ -66,10 +101,22 @@ export default function App() {
     }, 4000);
   };
 
-  // Initial Data Fetching
+  // Helper to recompute metrics from current state
+  const updateMetrics = useCallback((currentItems: IntelItem[]) => {
+    setMetrics({
+      totalItems: currentItems.length,
+      criticalAlerts: currentItems.filter(i => i.level === 'CRITICAL').length,
+      activeSources: REGIONAL_SOURCES.length,
+      lastSync: new Date().toISOString(),
+      feedsOnline: REGIONAL_SOURCES.length,
+      geminiOperational: true
+    });
+  }, []);
+
+  // Fetch from backend API if available, fallback gracefully to static data
   const fetchAllData = useCallback(async () => {
     try {
-      const [itemsRes, commoditiesRes, nodesRes, profilesRes, sourcesRes, statsRes] = await Promise.all([
+      const [itemsRes, commoditiesRes, nodesRes, profilesRes, sourcesRes, statsRes] = await Promise.allSettled([
         fetch('/api/intel/items'),
         fetch('/api/intel/commodities'),
         fetch('/api/intel/nodes'),
@@ -78,32 +125,58 @@ export default function App() {
         fetch('/api/intel/stats'),
       ]);
 
-      if (itemsRes.ok) {
-        const data = await itemsRes.json();
-        setItems(data.items || []);
+      if (itemsRes.status === 'fulfilled' && itemsRes.value.ok) {
+        const contentType = itemsRes.value.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await itemsRes.value.json();
+          if (data.items && data.items.length > 0) {
+            setItems(data.items);
+            localStorage.setItem('osint_cono_sur_items', JSON.stringify(data.items));
+          }
+        }
       }
-      if (commoditiesRes.ok) {
-        const data = await commoditiesRes.json();
-        setCommodities(data.commodities || []);
+
+      if (commoditiesRes.status === 'fulfilled' && commoditiesRes.value.ok) {
+        const contentType = commoditiesRes.value.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await commoditiesRes.value.json();
+          if (data.commodities) setCommodities(data.commodities);
+        }
       }
-      if (nodesRes.ok) {
-        const data = await nodesRes.json();
-        setNodes(data.nodes || []);
+
+      if (nodesRes.status === 'fulfilled' && nodesRes.value.ok) {
+        const contentType = nodesRes.value.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await nodesRes.value.json();
+          if (data.nodes) setNodes(data.nodes);
+        }
       }
-      if (profilesRes.ok) {
-        const data = await profilesRes.json();
-        setProfiles(data.profiles || {});
+
+      if (profilesRes.status === 'fulfilled' && profilesRes.value.ok) {
+        const contentType = profilesRes.value.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await profilesRes.value.json();
+          if (data.profiles) setProfiles(data.profiles);
+        }
       }
-      if (sourcesRes.ok) {
-        const data = await sourcesRes.json();
-        setSources(data.sources || []);
+
+      if (sourcesRes.status === 'fulfilled' && sourcesRes.value.ok) {
+        const contentType = sourcesRes.value.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await sourcesRes.value.json();
+          if (data.sources) setSources(data.sources);
+        }
       }
-      if (statsRes.ok) {
-        const data = await statsRes.json();
-        setMetrics(data);
+
+      if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+        const contentType = statsRes.value.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await statsRes.value.json();
+          setMetrics(data);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching intelligence data:', error);
+    } catch {
+      // Running statically without backend: Fallback already loaded
     }
   }, []);
 
@@ -111,20 +184,42 @@ export default function App() {
     fetchAllData();
   }, [fetchAllData]);
 
-  // Sync Live Feeds Action
+  // Sync Live Feeds Action (Server-first with client-side CORS proxy fallback)
   const handleSyncFeeds = async () => {
     setIsSyncing(true);
     try {
-      const res = await fetch('/api/intel/sync', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
+      let syncDone = false;
+      try {
+        const res = await fetch('/api/intel/sync', { method: 'POST' });
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data.success) {
+              showToast(
+                `Sincronización completada: ${data.newItemsCount} cables nuevos detectados en fuentes abiertas.`,
+                'success'
+              );
+              fetchAllData();
+              syncDone = true;
+            }
+          }
+        }
+      } catch {
+        // Backend offline, fallback to client-side sync
+      }
+
+      if (!syncDone) {
+        // Client-side direct RSS parsing with CORS proxy
+        const updated = await syncClientFeeds(items);
+        const newCount = Math.max(0, updated.length - items.length);
+        setItems(updated);
+        localStorage.setItem('osint_cono_sur_items', JSON.stringify(updated));
+        updateMetrics(updated);
         showToast(
-          `Sincronización completada: ${data.newItemsCount} cables nuevos detectados en fuentes abiertas.`,
+          `Sincronización directa de fuentes completada: ${newCount > 0 ? `${newCount} cables nuevos detectados.` : 'Cables actualizados.'}`,
           'success'
         );
-        fetchAllData();
-      } else {
-        showToast('No se detectaron cables nuevos en este ciclo.', 'info');
       }
     } catch (err) {
       console.error('Sync error:', err);
@@ -138,17 +233,19 @@ export default function App() {
   const handleToggleBookmark = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`/api/intel/bookmark/${id}`, { method: 'POST' });
-      if (res.ok) {
-        setItems((prev) =>
-          prev.map((item) => (item.id === id ? { ...item, bookmarked: !item.bookmarked } : item))
-        );
-        if (selectedItemForDetail && selectedItemForDetail.id === id) {
-          setSelectedItemForDetail((prev) => prev ? { ...prev, bookmarked: !prev.bookmarked } : null);
-        }
-      }
-    } catch (err) {
-      console.error('Bookmark error:', err);
+      fetch(`/api/intel/bookmark/${id}`, { method: 'POST' }).catch(() => {});
+    } catch {}
+
+    setItems((prev) => {
+      const updated = prev.map((item) => (item.id === id ? { ...item, bookmarked: !item.bookmarked } : item));
+      try {
+        localStorage.setItem('osint_cono_sur_items', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    if (selectedItemForDetail && selectedItemForDetail.id === id) {
+      setSelectedItemForDetail((prev) => prev ? { ...prev, bookmarked: !prev.bookmarked } : null);
     }
   };
 
@@ -163,26 +260,35 @@ export default function App() {
     tags: string[];
     location?: { name: string; lat?: number; lng?: number };
   }) => {
+    const newItem: IntelItem = {
+      id: `manual-${Date.now()}`,
+      ...itemData,
+      timestamp: new Date().toISOString(),
+      verified: true,
+      bookmarked: true
+    };
+
     try {
-      const res = await fetch('/api/intel/items', {
+      fetch('/api/intel/items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(itemData),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setItems((prev) => [data.item, ...prev]);
-        showToast('Cable de inteligencia inyectado con éxito en la red.', 'success');
-        fetchAllData();
-      }
-    } catch (err) {
-      console.error('Error adding item:', err);
-      showToast('Error al ingresar el cable.', 'error');
-      throw err;
-    }
+      }).catch(() => {});
+    } catch {}
+
+    setItems((prev) => {
+      const updated = [newItem, ...prev];
+      try {
+        localStorage.setItem('osint_cono_sur_items', JSON.stringify(updated));
+      } catch {}
+      updateMetrics(updated);
+      return updated;
+    });
+
+    showToast('Cable de inteligencia inyectado con éxito en la red.', 'success');
   };
 
-  // Generate Strategic Report via Gemini
+  // Generate Strategic Report via Gemini / Client Engine
   const handleGenerateReport = async (params: {
     reportType: 'SITREP' | 'DOSSIER_COUNTRY' | 'THREAT_MATRIX' | 'GEOECONOMIC' | 'EARLY_WARNING' | 'CUSTOM';
     targetCountries: CountryCode[];
@@ -191,18 +297,45 @@ export default function App() {
   }): Promise<GeneratedReport> => {
     setIsGeneratingReport(true);
     try {
-      const res = await fetch('/api/intel/generate-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params),
-      });
-      const data = await res.json();
-      if (data.report) {
-        setHistoryReports((prev) => [data.report, ...prev]);
-        showToast('Informe de inteligencia generado con éxito con Gemini 3.7 Flash.', 'success');
-        return data.report;
+      let report: GeneratedReport | null = null;
+      try {
+        const res = await fetch('/api/intel/generate-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(params),
+        });
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data.report) report = data.report;
+          }
+        }
+      } catch {
+        // Backend not available
       }
-      throw new Error(data.error || 'Failed to generate report');
+
+      if (!report) {
+        // Run client-side report generator
+        await new Promise((r) => setTimeout(r, 600));
+        report = generateClientReport({
+          ...params,
+          items
+        });
+      }
+
+      if (report) {
+        setHistoryReports((prev) => {
+          const updated = [report!, ...prev];
+          try {
+            localStorage.setItem('osint_cono_sur_reports', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+        showToast('Informe de inteligencia generado con éxito.', 'success');
+        return report;
+      }
+      throw new Error('No se pudo generar el informe.');
     } catch (err: any) {
       showToast(`Error generando informe: ${err.message}`, 'error');
       throw err;
@@ -213,12 +346,24 @@ export default function App() {
 
   // Ask Analyst Copilot
   const handleAskAnalyst = async (query: string, countryFilter?: CountryCode | 'ALL') => {
-    const res = await fetch('/api/intel/ask-analyst', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, countryFilter }),
-    });
-    return await res.json();
+    try {
+      const res = await fetch('/api/intel/ask-analyst', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, countryFilter }),
+      });
+      if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          return await res.json();
+        }
+      }
+    } catch {
+      // Backend offline
+    }
+
+    await new Promise((r) => setTimeout(r, 500));
+    return generateClientAnalystAnswer(query, countryFilter, items);
   };
 
   return (
