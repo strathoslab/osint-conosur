@@ -182,13 +182,29 @@ export default function App() {
 
   useEffect(() => {
     fetchAllData();
-  }, [fetchAllData]);
 
-  // Sync Live Feeds Action (Server-first with client-side CORS proxy fallback)
+    // Background auto-refresh every 3.5 minutes (210,000 ms)
+    const autoRefreshInterval = setInterval(() => {
+      syncClientFeeds(items).then(({ updatedItems, newCount }) => {
+        if (newCount > 0) {
+          setItems(updatedItems);
+          localStorage.setItem('osint_cono_sur_items', JSON.stringify(updatedItems));
+          updateMetrics(updatedItems);
+          showToast(`Auto-actualización OSINT: ${newCount} nuevos cables detectados.`, 'info');
+        }
+      }).catch(() => {});
+    }, 210000);
+
+    return () => clearInterval(autoRefreshInterval);
+  }, [fetchAllData, items, updateMetrics]);
+
+  // Sync Live Feeds Action (Server-first with client-side CORS proxy cascade)
   const handleSyncFeeds = async () => {
     setIsSyncing(true);
     try {
-      let syncDone = false;
+      let serverSyncSucceeded = false;
+      let serverNewCount = 0;
+
       try {
         const res = await fetch('/api/intel/sync', { method: 'POST' });
         if (res.ok) {
@@ -196,34 +212,38 @@ export default function App() {
           if (contentType.includes('application/json')) {
             const data = await res.json();
             if (data.success) {
-              showToast(
-                `Sincronización completada: ${data.newItemsCount} cables nuevos detectados en fuentes abiertas.`,
-                'success'
-              );
-              fetchAllData();
-              syncDone = true;
+              serverSyncSucceeded = true;
+              serverNewCount = data.newItemsCount || 0;
+              await fetchAllData();
             }
           }
         }
       } catch {
-        // Backend offline, fallback to client-side sync
+        // Server offline / static GitHub Pages mode
       }
 
-      if (!syncDone) {
-        // Client-side direct RSS parsing with CORS proxy
-        const updated = await syncClientFeeds(items);
-        const newCount = Math.max(0, updated.length - items.length);
-        setItems(updated);
-        localStorage.setItem('osint_cono_sur_items', JSON.stringify(updated));
-        updateMetrics(updated);
+      // Always perform client-side deep sync if running client-side or if server returned 0 new items
+      const { updatedItems, newCount, feedsChecked } = await syncClientFeeds(items);
+      const totalNew = serverNewCount + newCount;
+
+      setItems(updatedItems);
+      localStorage.setItem('osint_cono_sur_items', JSON.stringify(updatedItems));
+      updateMetrics(updatedItems);
+
+      if (totalNew > 0) {
         showToast(
-          `Sincronización directa de fuentes completada: ${newCount > 0 ? `${newCount} cables nuevos detectados.` : 'Cables actualizados.'}`,
+          `Sincronización completada: ${totalNew} cables nuevos incorporados al Wire (${feedsChecked} fuentes analizadas).`,
+          'success'
+        );
+      } else {
+        showToast(
+          `Fuentes sincronizadas (${feedsChecked} fuentes activas). Todos los cables están al día.`,
           'success'
         );
       }
     } catch (err) {
       console.error('Sync error:', err);
-      showToast('Error al conectar con los servidores de fuentes abiertas.', 'error');
+      showToast('Error durante la sincronización de feeds.', 'error');
     } finally {
       setIsSyncing(false);
     }
