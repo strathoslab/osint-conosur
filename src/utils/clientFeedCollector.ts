@@ -1,5 +1,5 @@
 import { IntelItem, CountryCode, StrategicPillar, AlertLevel } from '../types';
-import { REGIONAL_SOURCES, SourceDefinition } from '../data/staticData';
+import { REGIONAL_SOURCES } from '../data/staticData';
 
 // Blacklist of non-geopolitical / sports / entertainment terms
 const BLACKLISTED_TERMS = [
@@ -18,13 +18,14 @@ const BLACKLISTED_TERMS = [
 const STRATEGIC_KEYWORDS = [
   'defensa', 'militar', 'armada', 'fuerza aérea', 'fuerzas armadas', 'ejército', 'cancillería',
   'canciller', 'relaciones exteriores', 'ministro', 'presidente', 'embajador', 'tratado',
-  'soberanía', 'frontera', 'hidrovía', 'hidrovia', 'puerto', 'aduana', 'litio', 'cobre',
-  'vaca muerta', 'gasoducto', 'oleoducto', 'petróleo', 'itaipú', 'itaipu', 'yacyretá', 'yacyreta',
-  'banco central', 'reservas', 'inflación', 'deuda', 'aranceles', 'mercosur', 'brics', 'seguridad',
-  'narcotráfico', 'crimen organizado', 'pcc', 'comando vermelho', 'ciberataque', 'ransomware',
-  'inteligencia', 'senad', 'prefectura', 'gendarmería', 'policía federal', 'antártida', 'atlántico sur',
+  'soberanía', 'soberania', 'frontera', 'hidrovía', 'hidrovia', 'puerto', 'aduana', 'litio', 'cobre',
+  'vaca muerta', 'gasoducto', 'oleoducto', 'petróleo', 'petroleo', 'itaipú', 'itaipu', 'yacyretá', 'yacyreta',
+  'banco central', 'reservas', 'inflación', 'inflacion', 'deuda', 'aranceles', 'mercosur', 'brics', 'seguridad',
+  'narcotráfico', 'narcotrafico', 'crimen organizado', 'pcc', 'comando vermelho', 'ciberataque', 'ransomware',
+  'inteligencia', 'senad', 'prefectura', 'gendarmería', 'gendarmeria', 'policía', 'policia', 'antártida', 'antartida', 'atlántico', 'atlantico',
   'bioceánico', 'bioceanico', 'soja', 'granos', 'minería', 'mineria', 'codelco', 'ypfb', 'ypf',
-  'petrobras', 'transición energética', 'acuerdo bilateral', 'inversión', 'exportación', 'comercio exterior'
+  'petrobras', 'transición energética', 'acuerdo bilateral', 'inversión', 'inversion', 'exportación', 'exportacion', 'comercio exterior',
+  'gobierno', 'senado', 'diputados', 'ley', 'reforma', 'crisis', 'tensión', 'tension', 'conflicto', 'política', 'politica', 'economía', 'economia'
 ];
 
 // Targeted Google News OSINT topic feeds that update 24/7 with 100% reliable XML
@@ -140,36 +141,75 @@ function extractTags(text: string, country: CountryCode): string[] {
   return tags.length > 0 ? Array.from(new Set(tags)) : ['Geopolítica Cono Sur'];
 }
 
-// Fetch with cascading proxies
-async function fetchWithProxyCascade(targetUrl: string): Promise<string | null> {
-  const proxies = [
-    (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-    (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-  ];
+// Robust fetch using JSON API endpoints (rss2json, allorigins JSON, and raw proxies)
+async function fetchFeedContent(targetUrl: string): Promise<{ items: Partial<IntelItem>[] } | string | null> {
+  // Method 1: rss2json API (converts RSS/Atom to JSON automatically and has high CORS stability)
+  try {
+    const rss2JsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(targetUrl)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6500);
 
-  for (const proxyGen of proxies) {
-    try {
-      const proxyUrl = proxyGen(targetUrl);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(rss2JsonUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
 
-      const response = await fetch(proxyUrl, {
-        signal: controller.signal,
-        headers: { 'Accept': 'application/xml, text/xml, */*' }
-      });
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const text = await response.text();
-        if (text && (text.includes('<rss') || text.includes('<feed') || text.includes('<item') || text.includes('<entry>'))) {
-          return text;
-        }
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
+        const parsedItems: Partial<IntelItem>[] = data.items.map((it: any) => ({
+          title: it.title || '',
+          summary: (it.description || it.content || '').replace(/<[^>]*>?/gm, '').slice(0, 300),
+          sourceUrl: it.link || targetUrl,
+          timestamp: it.pubDate ? new Date(it.pubDate).toISOString() : new Date().toISOString(),
+          source: it.author || data.feed?.title || ''
+        }));
+        return { items: parsedItems };
       }
-    } catch {
-      // Try next proxy
     }
+  } catch {
+    // Try raw proxies
   }
+
+  // Method 2: AllOrigins JSON proxy
+  try {
+    const allOriginsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6500);
+
+    const res = await fetch(allOriginsUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.contents && typeof data.contents === 'string' && (data.contents.includes('<rss') || data.contents.includes('<feed') || data.contents.includes('<item') || data.contents.includes('<entry>'))) {
+        return data.contents;
+      }
+    }
+  } catch {
+    // Try direct XML proxy
+  }
+
+  // Method 3: Direct CORS Proxy
+  try {
+    const corsProxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6500);
+
+    const res = await fetch(corsProxyUrl, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/xml, text/xml, */*' }
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const text = await response.text();
+      if (text && (text.includes('<rss') || text.includes('<feed') || text.includes('<item') || text.includes('<entry>'))) {
+        return text;
+      }
+    }
+  } catch {
+    // Fallback failed
+  }
+
   return null;
 }
 
@@ -276,15 +316,38 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
 
   const fetchPromises = allFeedsToQuery.map(async (feed) => {
     try {
-      const xmlText = await fetchWithProxyCascade(feed.url);
-      if (xmlText) {
+      const result = await fetchFeedContent(feed.url);
+      if (result) {
         feedsChecked++;
-        const parsed = parseXmlFeed(xmlText, feed);
-        parsed.forEach(item => {
-          if (item.title) {
-            newItems.push(item as IntelItem);
-          }
-        });
+        if (typeof result === 'string') {
+          const parsed = parseXmlFeed(result, feed);
+          parsed.forEach(item => {
+            if (item.title) {
+              newItems.push(item as IntelItem);
+            }
+          });
+        } else if (result.items && Array.isArray(result.items)) {
+          result.items.forEach(rawItem => {
+            if (!rawItem.title) return;
+            const combinedText = `${rawItem.title} ${rawItem.summary || ''}`;
+            if (!isContentStrategic(rawItem.title, rawItem.summary || '')) return;
+
+            newItems.push({
+              id: `osint-json-${feed.country.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+              title: rawItem.title,
+              summary: rawItem.summary || rawItem.title,
+              content: rawItem.summary || rawItem.title,
+              source: rawItem.source || feed.name,
+              sourceUrl: rawItem.sourceUrl || feed.url,
+              country: feed.country,
+              pillar: determinePillar(combinedText, feed.defaultPillar),
+              level: determineLevel(combinedText),
+              timestamp: rawItem.timestamp || new Date().toISOString(),
+              tags: extractTags(combinedText, feed.country),
+              verified: true
+            });
+          });
+        }
       }
     } catch {
       // Continue
