@@ -3,47 +3,175 @@ import { IntelItem, CountryCode, StrategicPillar, AlertLevel } from '../src/type
 import { REGIONAL_SOURCES } from './sourcesConfig.js';
 import { INITIAL_INTEL_ITEMS } from './seedData.js';
 
-// Comprehensive sports and entertainment exclusion list
+// Comprehensive sports, entertainment, petty crimes, and lifestyle exclusion list
 const BLACKLIST_PATTERNS = [
-  // Football & Sports terms
+  // 1. Football & Sports terms
   'futbol', 'fútbol', 'futebol', 'partido de', 'partido por la', 'partido entre', 'copa libertadores', 
   'copa sudamericana', 'copa américa', 'copa america', 'champions league', 'conmebol', 'fifa', 
   'afa', 'anfp', 'cbf', 'auf', 'torneo clausura', 'torneo apertura', 'liga profesional', 'brasileirão', 
-  'brasileirao', 'copa do brasil', 'director técnico', ' dt ', 'entrenador', 'delantero', 'goleador', 
+  'brasileirao', 'copa do brasil', 'director técnico', 'director tecnico', ' dt ', 'entrenador', 'delantero', 'goleador', 
   'defensa central', 'lateral izquierdo', 'portero', 'arquero', 'gol de', 'goles', 'tiro libre', 
   'penal', 'árbitro', 'arbitro', 'var ', 'fixture', 'plantel', 'fichaje', 'refuerzo', 'mercado de pases',
   'boca juniors', 'river plate', 'san lorenzo', 'racing club', 'independiente', 'velez', 'estudiantes de la plata',
   'flamengo', 'palmeiras', 'corinthians', 'são paulo fc', 'santos fc', 'gremio', 'internacional de porto alegre', 
-  'cruzeiro', 'atletico mineiro', 'colo colo', 'universidad de chile', 'u de chile', 'universidad católica', 
+  'cruzeiro', 'atletico mineiro', 'colo colo', 'colo-colo', 'universidad de chile', 'u de chile', 'universidad católica', 
   'peñarol', 'nacional de montevideo', 'olimpia', 'cerro porteño', 'guaraní', 'libertad de paraguay',
   'the strongest', 'club bolívar', 'oriente petrolero', 'jorge wilstermann',
   'messi', 'neymar', 'vinicius', 'cr7', 'ronaldo', 'haaland', 'mbappé', 'mbappe', 'scaloni', 'bielsa', 
   'diniz', 'dorival', 'anibal moreno', 'cavani', 'suarez', 'suárez', 'maracaná', 'la bombonera', 'monumental',
-  'balón de oro', 'tenis', 'atp', 'wta', 'nadal', 'djokovic', 'alcaraz', 'formula 1', 'fórmula 1', 'f1 ', 
-  'gran premio', 'boxeo', 'ufc', 'básquet', 'basquetbol', 'nba', 'rugby', 'pumas', 'all blacks',
+  'balón de oro', 'tenis', 'atp', 'wta', 'nadal', 'djokovic', 'alcaraz', 'sinner', 'formula 1', 'fórmula 1', 'f1 ', 
+  'colapinto', 'verstappen', 'hamilton', 'gran premio', 'boxeo', 'ufc', 'mma', 'básquet', 'basquetbol', 'nba',
+  'rugby', 'pumas', 'all blacks', 'golf', 'pádel', 'padel',
 
-  // Entertainment / Showbiz / Gossip
+  // 2. Entertainment / Showbiz / Gossip
   'espectáculos', 'espectaculos', 'farandula', 'farándula', 'celebridad', 'horóscopo', 'horoscopo', 
-  'astrología', 'reality', 'telenovela', 'actriz', 'actor', 'cinefilo', 'música', 'musica', 'concierto', 
+  'astrología', 'astrologia', 'reality', 'telenovela', 'actriz', 'actor', 'cinefilo', 'música', 'musica', 'concierto', 
   'recital', 'lollapalooza', 'gran hermano', 'showmatch', 'chismes', 'boda', 'divorcio', 'alfombra roja',
-  'influencer', 'tiktoker', 'streamer', 'twitch', 'youtuber', 'estreno de cine', 'netflix', 'spotify'
+  'influencer', 'tiktoker', 'streamer', 'twitch', 'youtuber', 'estreno de cine', 'netflix', 'spotify',
+  'panelista', 'famosos', 'famosa', 'romance', 'noviazgo', 'separación de', 'infidelidad', 'casamiento',
+  'luna de miel', 'bikini', 'mar del plata teatro', 'carlos paz teatro', 'taquilla', 'viral de tiktok',
+  'viral en redes', 'meme', 'premios oscar', 'emmy', 'grammy', 'martín fierro', 'entradas agotadas',
+
+  // 3. Petty Crimes, Domestic Accidents & Road Traffic (crónica roja urbana cotidiana)
+  'accidente de tránsito', 'accidente de transito', 'choque frontal', 'choque en cadena', 'siniestro vial',
+  'vuelco de', 'despiste', 'semáforo', 'atropelló a', 'atropello a', 'motochorro', 'motochorros',
+  'arrebato', 'robo de celular', 'robo de billetera', 'asalto a mano armada', 'entradera', 'salidera',
+  'ladrones ingresaron', 'delincuentes armados', 'aprehendieron a', 'homicidio en riña', 'apuñalado en',
+  'pelea de boliche', 'femicidio', 'abuso sexual', 'violencia de género', 'violencia familiar',
+  'estafa telefónica', 'estafa telefonica', 'estafas virtuales', 'cuento del tío', 'cuento del tio',
+  'clonación de tarjeta', 'usurpación de terreno', 'pelea vecinal', 'ruidos molestos', 'incendio de vivienda',
+
+  // 4. Lifestyle, Astrology & Daily Meteorology
+  'signos del zodíaco', 'signo del zodiaco', 'carta astral', 'tarot', 'quiniela', 'lotería', 'loteria',
+  'quini 6', 'telekino', 'bingo', 'receta de', 'cómo preparar', 'ingredientes para', 'calorías',
+  'dieta para', 'adelgazar', 'rutina facial', 'cuidado de la piel', 'tips de belleza', 'moda verano',
+  'moda otoño', 'pronóstico del tiempo para el fin de semana', 'lluvia en la ciudad', 'calor agobiante en'
 ];
 
 // Strategic keywords that confirm high-value intelligence
 const STRATEGIC_KEYWORDS = [
+  // Atlántico Sur, Soberanía, Hidrocarburos & Geopolítica Marítima
+  'atlántico sur', 'atlantico sur', 'malvinas', 'falklands', 'falkland islands', 'georgias del sur', 'sandwich del sur',
+  'antártida', 'antartida', 'tratado antártico', 'pasaje de drake', 'canal beagle', 'estrecho de magallanes',
+  'milla 201', 'agujero azul', 'zona económica exclusiva', 'pesca ilegal', 'indnr', 'buque potero', 'poteros',
+  'calamar illex', 'calamar loligo', 'merluza negra', 'prefectura naval', 'armada argentina', 'patrullero oceánico', 'patrullero oceanico',
+  'rompehielos irízar', 'rompehielos irizar', 'base naval ushuaia', 'base marambio', 'puerto belgrano',
+  'soberanía marítima', 'soberania maritima', 'vigilancia aeroespacial', 'copla', 'plataforma continental',
+  'sea lion', 'navitas', 'navitas petroleum', 'rockhopper', 'rockhopper exploration', 'borders & southern',
+  'borders and southern', 'darwin discovery', 'cuenca malvinas norte', 'cuenca malvinas sur', 'fpso', 'pl032',
+  'fifca', 'fortuna limited', 'penguin news', 'mount pleasant', 'bfsai', 'fcdo', 'ministry of defence',
+  'global fishing watch', 'marinetraffic', 'vesselfinder', 'offshore energy', 'rusi', 'chatham house', 'observatorio malvinas',
+
+  // Defensa, Ciberseguridad & Fronteras
   'defensa', 'militar', 'fuerzas armadas', 'ejército', 'ejercito', 'armada', 'fuerza aérea', 'emco',
-  'soberanía', 'soberania', 'radar', 'invap', 'patrulla', 'frontera', 'paso fronterizo', 'seguridad interior',
+  'soberanía', 'soberania', 'radar', 'radares', 'invap', 'patrulla', 'frontera', 'paso fronterizo', 'seguridad interior',
+  'seguridad fronteriza', 'ciberseguridad', 'ciberdefensa', 'ransomware', 'ataque cibernético', 'infraestructura crítica',
+  'narcotráfico', 'narcotrafico', 'pcc', 'primeiro comando da capital', 'comando vermelho', 'crimen organizado',
+  'incautación', 'incautacion', 'senad', 'policía federal', 'policia federal', 'gendarmería', 'gendarmeria',
+
+  // Geopolítica de Estado & Diplomacia
   'canciller', 'cancillería', 'cancilleria', 'relaciones exteriores', 'itamaraty', 'diplomacia', 'embajada',
   'embajador', 'cumbre', 'mercosur', 'brics', 'oea', 'onu', 'acuerdo bilateral', 'tratado', 'comitiva',
+  'banco central', 'reservas', 'inflación', 'inflacion', 'divisas', 'arancel', 'balanza comercial',
+  'comercio exterior', 'commodities',
+
+  // Infraestructura Crítica & Recursos Estratégicos
   'litio', 'cobre', 'soja', 'harina de soja', 'grano', 'trigo', 'maíz', 'maiz', 'vaca muerta', 'hidrocarburos',
   'gasoducto', 'oleoducto', 'gnl', 'petróleo', 'petroleo', 'itaipú', 'itaipu', 'yacyretá', 'yacyreta',
   'hidrovía', 'hidrovia', 'río paraná', 'rio parana', 'río paraguay', 'rio paraguay', 'puerto', 'dragado',
-  'corredor bioceánico', 'bioceanico', 'banco central', 'reservas', 'inflación', 'inflacion', 'divisas',
-  'arancel', 'balanza comercial', 'comercio exterior', 'commodities', 'senad', 'policía federal', 'policia federal',
-  'narcotráfico', 'narcotrafico', 'pcc', 'comando vermelho', 'crimen organizado', 'incautación', 'incautacion',
-  'ciberseguridad', 'ciberdefensa', 'ransomware', 'geopolítica', 'geopolitica', 'geoint', 'osint',
-  'antártida', 'antartida', 'magallanes', 'pasaje de drake', 'canal beagle', 'malvinas', 'codelco', 'ypfb',
-  'ypf', 'petrobras', 'anp', 'carp', 'sequía', 'bajante fluvial', 'emergencia hídrica', 'crisis energética'
+  'corredor bioceánico', 'bioceanico', 'codelco', 'ypfb', 'ypf', 'petrobras', 'anp', 'carp',
+  'sequía', 'bajante fluvial', 'emergencia hídrica', 'crisis energética', 'minería', 'mineria',
+  'extracción directa de litio', 'salar de atacama', 'salar de uyuni'
+];
+
+const STRATEGIC_TOPIC_FEEDS: { country: CountryCode; pillar: StrategicPillar; name: string; url: string }[] = [
+  // Atlántico Sur & Antártida (Specific Dedicated Feeds)
+  {
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'OSINT Atlántico Sur & Soberanía Malvinas',
+    url: 'https://news.google.com/rss/search?q=("atlantico+sur"+OR+malvinas+OR+"falkland"+OR+"antartida"+OR+"pasaje+de+drake"+OR+"canal+beagle"+OR+"base+marambio"+OR+"tratado+antartico")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'OSINT Control Marítimo ZEE, Milla 201 & Pesca',
+    url: 'https://news.google.com/rss/search?q=("milla+201"+OR+"mar+argentino"+OR+"pesca+ilegal"+OR+"zona+economica+exclusiva"+OR+"prefectura+naval"+OR+"patrullero+oceanico"+OR+"armada+argentina")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'OSINT Polo Ushuaia, Magallanes & Antártida',
+    url: 'https://news.google.com/rss/search?q=("base+naval+ushuaia"+OR+"polo+logistico+antartico"+OR+"estrecho+de+magallanes"+OR+"rompehielos+irizar"+OR+"p-3+orion"+OR+"radares+tierra+del+fuego")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'REGIONAL',
+    pillar: 'ENERGY_INFRASTRUCTURE',
+    name: 'OSINT Sea Lion & Hidrocarburos Atlántico Sur',
+    url: 'https://news.google.com/rss/search?q=("Sea+Lion"+OR+"Navitas+Petroleum"+OR+"Rockhopper+Exploration"+OR+"Borders+and+Southern"+OR+"Falklands+oil"+OR+"Malvinas+petroleo"+OR+"offshore+energy")&hl=en&gl=US&ceid=US:en'
+  },
+  {
+    country: 'REGIONAL',
+    pillar: 'ECONOMY_COMMODITIES',
+    name: 'OSINT Pesca Atlántico Sur & FIFCA',
+    url: 'https://news.google.com/rss/search?q=("Falkland+Islands+fisheries"+OR+FIFCA+OR+"calamar+Loligo"+OR+"squid+fishery"+OR+"Milla+201"+OR+"pesca+ilegal+Malvinas")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'AR',
+    pillar: 'GEOPOLITICS_DIPLOMACY',
+    name: 'OSINT Diplomacia Soberanía Malvinas & FCDO',
+    url: 'https://news.google.com/rss/search?q=("Cancilleria+Argentina"+OR+"FCDO"+OR+"Mount+Pleasant"+OR+"soberania+Malvinas"+OR+"Falklands+referendum")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+
+  // Regional Pillars
+  {
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'OSINT Argentina (Defensa & Fuerzas Armadas)',
+    url: 'https://news.google.com/rss/search?q=argentina+(defensa+OR+"fuerzas+armadas"+OR+"armada+argentina"+OR+radares+OR+"fuerza+aerea"+OR+invap)&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'AR',
+    pillar: 'ENERGY_INFRASTRUCTURE',
+    name: 'Energía Cono Sur (Vaca Muerta & Gasoductos)',
+    url: 'https://news.google.com/rss/search?q=("vaca+muerta"+OR+"gasoducto+norte"+OR+"hidrocarburos"+OR+gnl)+argentina&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'CL',
+    pillar: 'ECONOMY_COMMODITIES',
+    name: 'Chile Estratégico (Litio, Cobre & Minería)',
+    url: 'https://news.google.com/rss/search?q=chile+(litio+OR+cobre+OR+codelco+OR+"estrategia+nacional+del+litio"+OR+"puerto+antofagasta")&hl=es-419&gl=CL&ceid=CL:es-419'
+  },
+  {
+    country: 'BR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'Brasil Geopolítica & Fronteras',
+    url: 'https://news.google.com/rss/search?q=brasil+("defesa+nacional"+OR+"seguranca+fronteiras"+OR+"itaipu"+OR+"porto+de+santos"+OR+mercosul)&hl=pt-419&gl=BR&ceid=BR:pt-419'
+  },
+  {
+    country: 'PY',
+    pillar: 'ENERGY_INFRASTRUCTURE',
+    name: 'Paraguay & Hidrovía Paraná',
+    url: 'https://news.google.com/rss/search?q=paraguay+(hidrovia+OR+"rio+paraguay"+OR+"senad"+OR+"itaipu+anexo+c"+OR+"corredor+bioceanico")&hl=es-419&gl=PY&ceid=PY:es-419'
+  },
+  {
+    country: 'UY',
+    pillar: 'ENERGY_INFRASTRUCTURE',
+    name: 'Uruguay Puertos & Geoeconomía',
+    url: 'https://news.google.com/rss/search?q=uruguay+("puerto+de+montevideo"+OR+dragado+OR+celulosa+OR+mercosur)&hl=es-419&gl=UY&ceid=UY:es-419'
+  },
+  {
+    country: 'BO',
+    pillar: 'ECONOMY_COMMODITIES',
+    name: 'Bolivia Recursos (Litio Uyuni & Gas)',
+    url: 'https://news.google.com/rss/search?q=bolivia+(litio+OR+uyuni+OR+ypfb+OR+mutun+OR+"gas+natural")&hl=es-419&gl=BO&ceid=BO:es-419'
+  },
+  {
+    country: 'REGIONAL',
+    pillar: 'GEOPOLITICS_DIPLOMACY',
+    name: 'Cono Sur Geopolítica Regional',
+    url: 'https://news.google.com/rss/search?q=("cono+sur"+OR+mercosur)+AND+(comercio+OR+tratado+OR+cancilleria+OR+cumbre)&hl=es-419&gl=AR&ceid=AR:es-419'
+  }
 ];
 
 class RegionalIntelCollector {
@@ -130,10 +258,25 @@ class RegionalIntelCollector {
     let newItemsCount = 0;
     let errorsCount = 0;
 
-    const sourcesWithRss = REGIONAL_SOURCES.filter(s => !!s.rssUrl);
+    const allFeeds = [
+      ...STRATEGIC_TOPIC_FEEDS.map(f => ({
+        id: `topic-${f.country.toLowerCase()}`,
+        name: f.name,
+        country: f.country,
+        rssUrl: f.url,
+        url: f.url
+      })),
+      ...REGIONAL_SOURCES.filter(s => !!s.rssUrl).map(s => ({
+        id: s.id,
+        name: s.name,
+        country: s.country,
+        rssUrl: s.rssUrl!,
+        url: s.url
+      }))
+    ];
 
     // Fetch sources in parallel with strict timeout
-    const fetchPromises = sourcesWithRss.map(async (source) => {
+    const fetchPromises = allFeeds.map(async (source) => {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 4500); // 4.5s timeout
