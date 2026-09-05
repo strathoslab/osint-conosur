@@ -1,13 +1,37 @@
+export type SourceCategory = 
+  | 'GOVERNMENT_DEFENSE' 
+  | 'ECONOMIC_CENTRAL_BANK' 
+  | 'MEDIA_OSINT' 
+  | 'ENERGY_MINING' 
+  | 'LOGISTICS_PORTS'
+  | 'TECHNICAL_TRACKING'
+  | 'THINK_TANK'
+  | 'CORPORATE_REGULATORY';
+
+export type SourceSubCategory = 
+  | 'OFFICIAL_GOV' 
+  | 'HYDROCARBONS' 
+  | 'FISHERIES' 
+  | 'MEDIA_LOCAL' 
+  | 'TECHNICAL_DATA' 
+  | 'THINK_TANK' 
+  | 'REGULATORY_REGISTRY';
+
 export interface SourceDefinition {
   id: string;
   name: string;
   country: 'AR' | 'CL' | 'UY' | 'BR' | 'PY' | 'BO' | 'REGIONAL';
-  category: 'GOVERNMENT_DEFENSE' | 'ECONOMIC_CENTRAL_BANK' | 'MEDIA_OSINT' | 'ENERGY_MINING' | 'LOGISTICS_PORTS';
+  category: SourceCategory;
   url: string;
   rssUrl?: string;
-  language: 'es' | 'pt';
+  language: 'es' | 'pt' | 'en';
   reliabilityScore: 'A1' | 'A2' | 'B1' | 'B2'; // NATO OSINT Reliability standard
   description: string;
+  subCategory?: SourceSubCategory;
+  syncStatus?: 'LIVE_SYNC' | 'PORTAL_DIRECT' | 'FILINGS_FEED';
+  ticker?: string;
+  locationLabel?: string;
+  focusArea?: string;
 }
 
 export const REGIONAL_SOURCES: SourceDefinition[] = [
@@ -65,6 +89,72 @@ export const REGIONAL_SOURCES: SourceDefinition[] = [
     language: 'es',
     reliabilityScore: 'A2',
     description: 'Análisis de compras de defensa, patrullaje en Atlántico Sur y radares INVAP.'
+  },
+  {
+    id: 'ar-gaceta-marinera',
+    name: 'Gaceta Marinera (Armada Argentina)',
+    country: 'AR',
+    category: 'GOVERNMENT_DEFENSE',
+    url: 'https://gacetamarinera.com.ar',
+    rssUrl: 'https://gacetamarinera.com.ar/feed/',
+    language: 'es',
+    reliabilityScore: 'A1',
+    description: 'Órgano oficial de la Armada Argentina: patrullaje naval, Campaña Antártica de Verano (CAV), buques oceanográficos y control del Atlántico Sur.'
+  },
+  {
+    id: 'ar-revista-puerto',
+    name: 'Revista Puerto (Mar Argentino & Milla 201)',
+    country: 'AR',
+    category: 'LOGISTICS_PORTS',
+    url: 'https://revistapuerto.com.ar',
+    rssUrl: 'https://revistapuerto.com.ar/feed/',
+    language: 'es',
+    reliabilityScore: 'A2',
+    description: 'Referencia líder en monitoreo del calamar Illex, merluza negra, flotas poteras extranjeras en la Milla 201 y patrullas de Prefectura Naval.'
+  },
+  {
+    id: 'ar-agenda-malvinas',
+    name: 'Agenda Malvinas (Soberanía & Antártida)',
+    country: 'AR',
+    category: 'MEDIA_OSINT',
+    url: 'https://agendamalvinas.com.ar',
+    rssUrl: 'https://agendamalvinas.com.ar/feed/',
+    language: 'es',
+    reliabilityScore: 'A2',
+    description: 'Agencia de noticias especializada en la disputa de soberanía de Malvinas, Georgias, Sandwich del Sur, geopolítica polar y tratados antárticos.'
+  },
+  {
+    id: 'ar-pucara-defensa',
+    name: 'Pucará Defensa (Aeroespacial & Vigilancia Austral)',
+    country: 'AR',
+    category: 'GOVERNMENT_DEFENSE',
+    url: 'https://www.pucara.org',
+    rssUrl: 'https://www.pucara.org/feed/',
+    language: 'es',
+    reliabilityScore: 'A2',
+    description: 'Análisis de defensa militar regional, cobertura de radares australes INVAP, despliegue de aviones P-3 Orion y vigilancia aeroespacial.'
+  },
+  {
+    id: 'ar-diario-fin-del-mundo',
+    name: 'El Diario del Fin del Mundo (Tierra del Fuego & Ushuaia)',
+    country: 'AR',
+    category: 'MEDIA_OSINT',
+    url: 'https://www.eldiariodelfindelmundo.com',
+    rssUrl: 'https://www.eldiariodelfindelmundo.com/rss/',
+    language: 'es',
+    reliabilityScore: 'B1',
+    description: 'Monitoreo territorial de Tierra del Fuego, base naval y polo logístico de Ushuaia, y cruces marítimos hacia la Antártida.'
+  },
+  {
+    id: 'reg-mercopress',
+    name: 'MercoPress (South Atlantic News Agency)',
+    country: 'REGIONAL',
+    category: 'MEDIA_OSINT',
+    url: 'https://es.mercopress.com',
+    rssUrl: 'https://es.mercopress.com/rss/',
+    language: 'es',
+    reliabilityScore: 'B1',
+    description: 'Agencia independiente con cobertura marítima intensiva de las Islas Malvinas/Falklands, pesquerías del Atlántico Sur y diplomacia regional.'
   },
 
   // CHILE
@@ -330,5 +420,328 @@ export const REGIONAL_SOURCES: SourceDefinition[] = [
     language: 'es',
     reliabilityScore: 'A1',
     description: 'Monitoreo de caudales de ríos Paraná y Paraguay, dragado y navegación.'
+  },
+
+  // ==========================================
+  // ATLÁNTICO SUR, MALVINAS & ESPACIO AUSTRAL
+  // ==========================================
+  // GOBIERNOS Y AUTORIDADES OFICIALES
+  {
+    id: 'ar-cancilleria',
+    name: 'Cancillería Argentina (MRECIC)',
+    country: 'AR',
+    category: 'GOVERNMENT_DEFENSE',
+    subCategory: 'OFFICIAL_GOV',
+    syncStatus: 'LIVE_SYNC',
+    url: 'https://www.cancilleria.gob.ar',
+    rssUrl: 'https://www.cancilleria.gob.ar/es/actualidad/noticias/feed',
+    language: 'es',
+    reliabilityScore: 'A1',
+    description: 'Comunicados oficiales sobre soberanía de Malvinas, sanciones a hidrocarburos ilegales, Tratado Antártico y límites de la plataforma continental (COPLA).',
+    focusArea: 'Soberanía, Sanciones & Diplomacia'
+  },
+  {
+    id: 'ar-presidencia',
+    name: 'Oficina del Presidente / Casa Rosada',
+    country: 'AR',
+    category: 'GOVERNMENT_DEFENSE',
+    subCategory: 'OFFICIAL_GOV',
+    syncStatus: 'LIVE_SYNC',
+    url: 'https://www.casarosada.gob.ar',
+    language: 'es',
+    reliabilityScore: 'A1',
+    description: 'Decretos del Poder Ejecutivo, anuncios presidenciales de Javier Milei, política exterior y directivas de seguridad nacional.',
+    focusArea: 'Decretos del PEN & Política Exterior'
+  },
+  {
+    id: 'fig-mineral-resources',
+    name: 'FIG Department of Mineral Resources',
+    country: 'REGIONAL',
+    category: 'ENERGY_MINING',
+    subCategory: 'OFFICIAL_GOV',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://falklands.gov.fk/mineralresources/',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Autoridad hidrocarburífera de las islas: licencias de exploración/producción offshore, mapas batimétricos, estado de Sea Lion (PL032) e informes de impacto ambiental.',
+    focusArea: 'Licencias Offshore & Sea Lion Status'
+  },
+  {
+    id: 'fig-fisheries',
+    name: 'FIG Directorate of Fisheries',
+    country: 'REGIONAL',
+    category: 'LOGISTICS_PORTS',
+    subCategory: 'OFFICIAL_GOV',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://www.fig.gov.fk',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Regulación pesquera del Atlántico Sur: cuotas ITQ, biomasa de calamar Loligo/Illex, estadísticas de capturas y patrullajes en la FICZ/FOCZ.',
+    focusArea: 'Cuotas ITQ & Estadísticas de Captura'
+  },
+  {
+    id: 'uk-fcdo',
+    name: 'UK Foreign, Commonwealth & Development Office (FCDO)',
+    country: 'REGIONAL',
+    category: 'GOVERNMENT_DEFENSE',
+    subCategory: 'OFFICIAL_GOV',
+    syncStatus: 'LIVE_SYNC',
+    url: 'https://www.gov.uk/government/organisations/foreign-commonwealth-development-office',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Posición diplomática oficial del Reino Unido sobre soberanía, autodeterminación de las islas, Territorios Británicos de Ultramar y Atlántico Sur.',
+    focusArea: 'Posición Diplomática Oficial UK'
+  },
+  {
+    id: 'uk-mod',
+    name: 'UK Ministry of Defence (MoD / BFSAI)',
+    country: 'REGIONAL',
+    category: 'GOVERNMENT_DEFENSE',
+    subCategory: 'OFFICIAL_GOV',
+    syncStatus: 'LIVE_SYNC',
+    url: 'https://www.gov.uk/government/organisations/ministry-of-defence',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Fuerzas Británicas del Atlántico Sur (BFSAI), base aérea y complejo militar Mount Pleasant (MPA), patrullas del HMS Forth y ejercicios navales.',
+    focusArea: 'Seguridad Militar & Base Mount Pleasant'
+  },
+
+  // EMPRESAS DE HIDROCARBUROS (OPERADORES Y RELACIONADAS)
+  {
+    id: 'corp-navitas-petroleum',
+    name: 'Navitas Petroleum (Operador 65% Sea Lion)',
+    country: 'REGIONAL',
+    category: 'ENERGY_MINING',
+    subCategory: 'HYDROCARBONS',
+    syncStatus: 'FILINGS_FEED',
+    ticker: 'TASE: NVPT',
+    url: 'https://www.navitaspet.com/',
+    language: 'en',
+    reliabilityScore: 'A2',
+    description: 'Operadora principal del megadesarrollo Sea Lion (Cuenca Malvinas Norte, ~1.700M barriles in situ). Actualizaciones de FID, adquisición/charter de FPSO y reportes a inversores.',
+    focusArea: 'Sea Lion FID, FPSO & Reservas'
+  },
+  {
+    id: 'corp-rockhopper-exploration',
+    name: 'Rockhopper Exploration plc (Socio 35% Sea Lion)',
+    country: 'REGIONAL',
+    category: 'ENERGY_MINING',
+    subCategory: 'HYDROCARBONS',
+    syncStatus: 'FILINGS_FEED',
+    ticker: 'AIM: RKH',
+    url: 'https://rockhopperexploration.co.uk/',
+    language: 'en',
+    reliabilityScore: 'A2',
+    description: 'Compañía británica cotizante en Londres (AIM). Titular del 35% de interés en Sea Lion y licencias offshore PL004a/b. Emisiones de RNS y presentaciones anuales.',
+    focusArea: 'Licencias PL032 / PL004 & Anuncios RNS'
+  },
+  {
+    id: 'corp-borders-southern',
+    name: 'Borders & Southern Petroleum plc (Darwin)',
+    country: 'REGIONAL',
+    category: 'ENERGY_MINING',
+    subCategory: 'HYDROCARBONS',
+    syncStatus: 'FILINGS_FEED',
+    ticker: 'AIM: BOR',
+    url: 'https://bordersandsouthern.com/',
+    language: 'en',
+    reliabilityScore: 'A2',
+    description: 'Exploradora de la Cuenca Malvinas Sur. Descubrimiento de condensado de gas y crudo liviano Darwin (aprox. 500M bbl). Búsqueda de socios de farm-out y RNS.',
+    focusArea: 'Cuenca Sur / Descubrimiento Darwin'
+  },
+  {
+    id: 'corp-eco-atlantic',
+    name: 'Eco (Atlantic) Oil & Gas / JHI Falklands',
+    country: 'REGIONAL',
+    category: 'ENERGY_MINING',
+    subCategory: 'HYDROCARBONS',
+    syncStatus: 'FILINGS_FEED',
+    ticker: 'TSX-V / AIM: ECO',
+    url: 'https://ecooilandgas.com/',
+    language: 'en',
+    reliabilityScore: 'A2',
+    description: 'Compañía de exploración cotizante en Toronto y Londres con participaciones indirectas y acuerdos de prospección en bloques adyacentes del Atlántico Sur.',
+    focusArea: 'Prospección Offshore & Filings Toronto'
+  },
+
+  // PESCA Y EMPRESAS LOCALES
+  {
+    id: 'fifca-falklands',
+    name: 'FIFCA (Falkland Islands Fishing Companies Association)',
+    country: 'REGIONAL',
+    category: 'LOGISTICS_PORTS',
+    subCategory: 'FISHERIES',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'http://www.fifca.co.fk/',
+    language: 'en',
+    reliabilityScore: 'A2',
+    description: 'Cámara patronal pesquera de las islas: agrupa a Fortuna Ltd, Argos Group, Beauchene Fishing, Consolidated Fisheries (CFL), Seafish, Dragon Fishing y Pioneer Seafoods.',
+    focusArea: 'Membresía Pesquera, Sostenibilidad & Capturas'
+  },
+  {
+    id: 'fortuna-limited',
+    name: 'Fortuna Limited & Consorcios Pesqueros',
+    country: 'REGIONAL',
+    category: 'LOGISTICS_PORTS',
+    subCategory: 'FISHERIES',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'http://www.fifca.co.fk/membership',
+    language: 'en',
+    reliabilityScore: 'B1',
+    description: 'Mayor grupo armador y operador de buques poteros y arrastreros con base en Stanley; alianzas mixtas hispano-británicas para exportación de calamar a Vigo y Europa.',
+    focusArea: 'Operaciones de Flota Potera & Cuotas'
+  },
+
+  // MEDIOS LOCALES Y ESPECIALIZADOS
+  {
+    id: 'media-penguin-news',
+    name: 'Penguin News (Periódico Semanal de las Islas)',
+    country: 'REGIONAL',
+    category: 'MEDIA_OSINT',
+    subCategory: 'MEDIA_LOCAL',
+    syncStatus: 'LIVE_SYNC',
+    url: 'https://www.penguin-news.com',
+    language: 'en',
+    reliabilityScore: 'B1',
+    description: 'Único periódico semanal impreso y digital de Stanley: política local, debates legislativos, pesca, hidrocarburos y opinión comunitaria.',
+    focusArea: 'Cobertura Diaria / Política Local Stanley'
+  },
+  {
+    id: 'media-offshore-energy',
+    name: 'Offshore Energy / Upstream / Energy Voice',
+    country: 'REGIONAL',
+    category: 'ENERGY_MINING',
+    subCategory: 'MEDIA_LOCAL',
+    syncStatus: 'LIVE_SYNC',
+    url: 'https://www.offshore-energy.biz',
+    rssUrl: 'https://www.offshore-energy.biz/feed/',
+    language: 'en',
+    reliabilityScore: 'B1',
+    description: 'Inteligencia técnica y de mercado especializada en FPSOs, plataformas de perforación marina, contratistas EPCI y avances de Sea Lion.',
+    focusArea: 'Tecnología FPSO & Rig Intelligence'
+  },
+
+  // FUENTES DE MONITOREO TÉCNICO Y DATOS
+  {
+    id: 'tech-global-fishing-watch',
+    name: 'Global Fishing Watch (AIS Satelital Pesquero)',
+    country: 'REGIONAL',
+    category: 'TECHNICAL_TRACKING',
+    subCategory: 'TECHNICAL_DATA',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://globalfishingwatch.org',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Plataforma líder en telemetría satelital: rastreo en tiempo casi real de flotas pesqueras, esfuerzo de pesca en la Milla 201 y eventos de apagado de AIS.',
+    focusArea: 'Telemetría Satelital AIS & Milla 201'
+  },
+  {
+    id: 'tech-marinetraffic',
+    name: 'MarineTraffic / VesselFinder (Tráfico Naval AIS)',
+    country: 'REGIONAL',
+    category: 'TECHNICAL_TRACKING',
+    subCategory: 'TECHNICAL_DATA',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://www.marinetraffic.com',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Seguimiento de tráfico marítimo en vivo: petroleros, buques sísmicos, remolcadores de apoyo offshore (OSV/AHTS) y patrulleros de Prefectura/Armada.',
+    focusArea: 'Tracking en Vivo Buques Offshore & Soporte'
+  },
+  {
+    id: 'market-lse-rns',
+    name: 'London Stock Exchange / AIM RNS (Rockhopper & Borders)',
+    country: 'REGIONAL',
+    category: 'CORPORATE_REGULATORY',
+    subCategory: 'TECHNICAL_DATA',
+    syncStatus: 'FILINGS_FEED',
+    url: 'https://www.londonstockexchange.com',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Servicio de Noticias Regulatorias (RNS) de la Bolsa de Londres: comunicados obligatorios de precio, financiamiento, farm-outs y litigios de RKH y BOR.',
+    focusArea: 'Anuncios Regulatorios Oficiales LSE/AIM'
+  },
+  {
+    id: 'market-tase',
+    name: 'Tel Aviv Stock Exchange (TASE - Navitas NVPT)',
+    country: 'REGIONAL',
+    category: 'CORPORATE_REGULATORY',
+    subCategory: 'TECHNICAL_DATA',
+    syncStatus: 'FILINGS_FEED',
+    ticker: 'NVPT.TA',
+    url: 'https://www.tase.co.il',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Filings bursátiles oficiales de Navitas Petroleum: reportes de reservas 2P/3P auditadas por DeGolyer & MacNaughton, covenants bancarios y deuda.',
+    focusArea: 'Filings Financieros & Auditorías de Reservas'
+  },
+
+  // THINK TANKS / ANÁLISIS GEOPOLÍTICO
+  {
+    id: 'thinktank-rusi',
+    name: 'Royal United Services Institute (RUSI)',
+    country: 'REGIONAL',
+    category: 'THINK_TANK',
+    subCategory: 'THINK_TANK',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://rusi.org',
+    language: 'en',
+    reliabilityScore: 'B1',
+    description: 'Instituto decano británico de defensa y seguridad: doctrina de proyección naval, seguridad de pasos bioceánicos y presencia en el Atlántico Sur.',
+    focusArea: 'Defensa Marítima & Doctrina Polar'
+  },
+  {
+    id: 'thinktank-chatham-house',
+    name: 'Chatham House (The Royal Institute of International Affairs)',
+    country: 'REGIONAL',
+    category: 'THINK_TANK',
+    subCategory: 'THINK_TANK',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://www.chathamhouse.org',
+    language: 'en',
+    reliabilityScore: 'B1',
+    description: 'Análisis geopolítico y normativo: soberanía de recursos naturales, derecho del mar (UNCLOS) y relaciones del Reino Unido con el Cono Sur.',
+    focusArea: 'Derecho del Mar (UNCLOS) & Gobernanza'
+  },
+  {
+    id: 'thinktank-observatorio-malvinas',
+    name: 'Observatorio Malvinas & South Atlantic Council',
+    country: 'AR',
+    category: 'THINK_TANK',
+    subCategory: 'THINK_TANK',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://agendamalvinas.com.ar',
+    language: 'es',
+    reliabilityScore: 'B1',
+    description: 'Centros académicos y comités de expertos sobre el Atlántico Sur: monitoreo de recursos hidrocarburíferos y pesqueros no autorizados por Argentina.',
+    focusArea: 'Soberanía Jurídica & Impacto Económico'
+  },
+
+  // REGISTROS CORPORATIVOS & BURSÁTILES
+  {
+    id: 'reg-companies-house',
+    name: 'Companies House (UK Government)',
+    country: 'REGIONAL',
+    category: 'CORPORATE_REGULATORY',
+    subCategory: 'REGULATORY_REGISTRY',
+    syncStatus: 'PORTAL_DIRECT',
+    url: 'https://www.gov.uk/government/organisations/companies-house',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Registro mercantil del Reino Unido: actas constitutivas, directores, personas con control significativo (PSC) y balances de operadores británicos.',
+    focusArea: 'Estructuras Societarias & Accionariado'
+  },
+  {
+    id: 'reg-sec-sedar',
+    name: 'SEDAR+ / SEC EDGAR (Filings Corporativos)',
+    country: 'REGIONAL',
+    category: 'CORPORATE_REGULATORY',
+    subCategory: 'REGULATORY_REGISTRY',
+    syncStatus: 'FILINGS_FEED',
+    url: 'https://www.sedarplus.ca',
+    language: 'en',
+    reliabilityScore: 'A1',
+    description: 'Sistemas oficiales de divulgación de valores de Canadá y EE.UU.: seguimiento de propiedad accionaria de Eco Atlantic, Navitas y asociadas.',
+    focusArea: 'Ownership & Filings Bursátiles'
   }
 ];
