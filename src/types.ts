@@ -10,6 +10,42 @@ export type StrategicPillar =
 
 export type AlertLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'ROUTINE';
 
+export type SourceCategory = 
+  | 'GOVERNMENT_DEFENSE' 
+  | 'ECONOMIC_CENTRAL_BANK' 
+  | 'MEDIA_OSINT' 
+  | 'ENERGY_MINING' 
+  | 'LOGISTICS_PORTS'
+  | 'TECHNICAL_TRACKING'
+  | 'THINK_TANK'
+  | 'CORPORATE_REGULATORY';
+
+export type SourceSubCategory = 
+  | 'OFFICIAL_GOV' 
+  | 'HYDROCARBONS' 
+  | 'FISHERIES' 
+  | 'MEDIA_LOCAL' 
+  | 'TECHNICAL_DATA' 
+  | 'THINK_TANK' 
+  | 'REGULATORY_REGISTRY';
+
+export interface SourceDefinition {
+  id: string;
+  name: string;
+  country: CountryCode;
+  category: SourceCategory;
+  url: string;
+  rssUrl?: string;
+  language: 'es' | 'pt' | 'en';
+  reliabilityScore: 'A1' | 'A2' | 'B1' | 'B2';
+  description: string;
+  subCategory?: SourceSubCategory;
+  syncStatus?: 'LIVE_SYNC' | 'PORTAL_DIRECT' | 'FILINGS_FEED';
+  ticker?: string;
+  locationLabel?: string;
+  focusArea?: string;
+}
+
 export interface IntelItem {
   id: string;
   title: string;
