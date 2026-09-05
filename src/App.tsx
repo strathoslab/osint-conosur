@@ -50,17 +50,23 @@ import {
 } from './data/staticData';
 import { syncClientFeeds } from './utils/clientFeedCollector';
 import { generateClientReport, generateClientAnalystAnswer } from './utils/clientIntelligenceEngine';
+import { sanitizeIntelItem } from './utils/intelSanitizer';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'wire' | 'commodities' | 'geoint' | 'reports' | 'analyst' | 'sources'>('wire');
   
-  // Initialize with static fallback or saved localStorage data
+  // Initialize with static fallback or saved localStorage data (auto-sanitized for clean sources and dates)
   const [items, setItems] = useState<IntelItem[]>(() => {
     try {
       const saved = localStorage.getItem('osint_cono_sur_items');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const sanitized = parsed
+            .map((it: IntelItem) => sanitizeIntelItem(it))
+            .filter((it: IntelItem | null): it is IntelItem => it !== null);
+          if (sanitized.length > 0) return sanitized;
+        }
       }
     } catch {}
     return INITIAL_INTEL_ITEMS;
@@ -130,8 +136,13 @@ export default function App() {
         if (contentType.includes('application/json')) {
           const data = await itemsRes.value.json();
           if (data.items && data.items.length > 0) {
-            setItems(data.items);
-            localStorage.setItem('osint_cono_sur_items', JSON.stringify(data.items));
+            const sanitized = data.items
+              .map((it: IntelItem) => sanitizeIntelItem(it))
+              .filter((it: IntelItem | null): it is IntelItem => it !== null);
+            if (sanitized.length > 0) {
+              setItems(sanitized);
+              localStorage.setItem('osint_cono_sur_items', JSON.stringify(sanitized));
+            }
           }
         }
       }
@@ -243,7 +254,7 @@ export default function App() {
       }
     } catch (err) {
       console.error('Sync error:', err);
-      showToast('Error durante la sincronización de feeds.', 'error');
+      showToast('Error al conectar con los servidores de fuentes abiertas.', 'error');
     } finally {
       setIsSyncing(false);
     }
