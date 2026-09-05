@@ -85,42 +85,42 @@ const STRATEGIC_KEYWORDS = [
 ];
 
 const STRATEGIC_TOPIC_FEEDS: { country: CountryCode; pillar: StrategicPillar; name: string; url: string }[] = [
-  // Atlántico Sur & Antártida (Specific Dedicated Feeds)
+  // Atlántico Sur & Antártida (Specific Dedicated Feeds with recency filter)
   {
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Atlántico Sur & Soberanía Malvinas',
-    url: 'https://news.google.com/rss/search?q=("atlantico+sur"+OR+malvinas+OR+"falkland"+OR+"antartida"+OR+"pasaje+de+drake"+OR+"canal+beagle"+OR+"base+marambio"+OR+"tratado+antartico")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("atlantico+sur"+OR+malvinas+OR+"falkland"+OR+"antartida"+OR+"pasaje+de+drake"+OR+"canal+beagle"+OR+"base+marambio"+OR+"tratado+antartico")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Control Marítimo ZEE, Milla 201 & Pesca',
-    url: 'https://news.google.com/rss/search?q=("milla+201"+OR+"mar+argentino"+OR+"pesca+ilegal"+OR+"zona+economica+exclusiva"+OR+"prefectura+naval"+OR+"patrullero+oceanico"+OR+"armada+argentina")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("milla+201"+OR+"mar+argentino"+OR+"pesca+ilegal"+OR+"zona+economica+exclusiva"+OR+"prefectura+naval"+OR+"patrullero+oceanico"+OR+"armada+argentina")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Polo Ushuaia, Magallanes & Antártida',
-    url: 'https://news.google.com/rss/search?q=("base+naval+ushuaia"+OR+"polo+logistico+antartico"+OR+"estrecho+de+magallanes"+OR+"rompehielos+irizar"+OR+"p-3+orion"+OR+"radares+tierra+del+fuego")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("base+naval+ushuaia"+OR+"polo+logistico+antartico"+OR+"estrecho+de+magallanes"+OR+"rompehielos+irizar"+OR+"p-3+orion"+OR+"radares+tierra+del+fuego")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'REGIONAL',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'OSINT Sea Lion & Hidrocarburos Atlántico Sur',
-    url: 'https://news.google.com/rss/search?q=("Sea+Lion"+OR+"Navitas+Petroleum"+OR+"Rockhopper+Exploration"+OR+"Borders+and+Southern"+OR+"Falklands+oil"+OR+"Malvinas+petroleo"+OR+"offshore+energy")&hl=en&gl=US&ceid=US:en'
+    url: 'https://news.google.com/rss/search?q=(("Sea+Lion"+AND+(oil+OR+petroleum+OR+offshore+OR+field+OR+fpso+OR+navitas+OR+rockhopper+OR+falklands+OR+malvinas))+OR+"Navitas+Petroleum"+OR+"Rockhopper+Exploration"+OR+"Borders+and+Southern"+OR+"Falklands+oil"+OR+"Malvinas+petroleo")+when:45d&hl=en&gl=US&ceid=US:en'
   },
   {
     country: 'REGIONAL',
     pillar: 'ECONOMY_COMMODITIES',
     name: 'OSINT Pesca Atlántico Sur & FIFCA',
-    url: 'https://news.google.com/rss/search?q=("Falkland+Islands+fisheries"+OR+FIFCA+OR+"calamar+Loligo"+OR+"squid+fishery"+OR+"Milla+201"+OR+"pesca+ilegal+Malvinas")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("Falkland+Islands+fisheries"+OR+FIFCA+OR+"calamar+Loligo"+OR+"squid+fishery"+OR+"Milla+201"+OR+"pesca+ilegal+Malvinas")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'GEOPOLITICS_DIPLOMACY',
     name: 'OSINT Diplomacia Soberanía Malvinas & FCDO',
-    url: 'https://news.google.com/rss/search?q=("Cancilleria+Argentina"+OR+"FCDO"+OR+"Mount+Pleasant"+OR+"soberania+Malvinas"+OR+"Falklands+referendum")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("Cancilleria+Argentina"+OR+"FCDO"+OR+"Mount+Pleasant"+OR+"soberania+Malvinas"+OR+"Falklands+referendum")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
 
   // Regional Pillars
@@ -128,49 +128,49 @@ const STRATEGIC_TOPIC_FEEDS: { country: CountryCode; pillar: StrategicPillar; na
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Argentina (Defensa & Fuerzas Armadas)',
-    url: 'https://news.google.com/rss/search?q=argentina+(defensa+OR+"fuerzas+armadas"+OR+"armada+argentina"+OR+radares+OR+"fuerza+aerea"+OR+invap)&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=argentina+(defensa+OR+"fuerzas+armadas"+OR+"armada+argentina"+OR+radares+OR+"fuerza+aerea"+OR+invap)+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'Energía Cono Sur (Vaca Muerta & Gasoductos)',
-    url: 'https://news.google.com/rss/search?q=("vaca+muerta"+OR+"gasoducto+norte"+OR+"hidrocarburos"+OR+gnl)+argentina&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("vaca+muerta"+OR+"gasoducto+norte"+OR+"hidrocarburos"+OR+gnl)+argentina+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'CL',
     pillar: 'ECONOMY_COMMODITIES',
     name: 'Chile Estratégico (Litio, Cobre & Minería)',
-    url: 'https://news.google.com/rss/search?q=chile+(litio+OR+cobre+OR+codelco+OR+"estrategia+nacional+del+litio"+OR+"puerto+antofagasta")&hl=es-419&gl=CL&ceid=CL:es-419'
+    url: 'https://news.google.com/rss/search?q=chile+(litio+OR+cobre+OR+codelco+OR+"estrategia+nacional+del+litio"+OR+"puerto+antofagasta")+when:45d&hl=es-419&gl=CL&ceid=CL:es-419'
   },
   {
     country: 'BR',
     pillar: 'DEFENSE_SECURITY',
     name: 'Brasil Geopolítica & Fronteras',
-    url: 'https://news.google.com/rss/search?q=brasil+("defesa+nacional"+OR+"seguranca+fronteiras"+OR+"itaipu"+OR+"porto+de+santos"+OR+mercosul)&hl=pt-419&gl=BR&ceid=BR:pt-419'
+    url: 'https://news.google.com/rss/search?q=brasil+("defesa+nacional"+OR+"seguranca+fronteiras"+OR+"itaipu"+OR+"porto+de+santos"+OR+mercosul)+when:45d&hl=pt-419&gl=BR&ceid=BR:pt-419'
   },
   {
     country: 'PY',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'Paraguay & Hidrovía Paraná',
-    url: 'https://news.google.com/rss/search?q=paraguay+(hidrovia+OR+"rio+paraguay"+OR+"senad"+OR+"itaipu+anexo+c"+OR+"corredor+bioceanico")&hl=es-419&gl=PY&ceid=PY:es-419'
+    url: 'https://news.google.com/rss/search?q=paraguay+(hidrovia+OR+"rio+paraguay"+OR+"senad"+OR+"itaipu+anexo+c"+OR+"corredor+bioceanico")+when:45d&hl=es-419&gl=PY&ceid=PY:es-419'
   },
   {
     country: 'UY',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'Uruguay Puertos & Geoeconomía',
-    url: 'https://news.google.com/rss/search?q=uruguay+("puerto+de+montevideo"+OR+dragado+OR+celulosa+OR+mercosur)&hl=es-419&gl=UY&ceid=UY:es-419'
+    url: 'https://news.google.com/rss/search?q=uruguay+("puerto+de+montevideo"+OR+dragado+OR+celulosa+OR+mercosur)+when:45d&hl=es-419&gl=UY&ceid=UY:es-419'
   },
   {
     country: 'BO',
     pillar: 'ECONOMY_COMMODITIES',
     name: 'Bolivia Recursos (Litio Uyuni & Gas)',
-    url: 'https://news.google.com/rss/search?q=bolivia+(litio+OR+uyuni+OR+ypfb+OR+mutun+OR+"gas+natural")&hl=es-419&gl=BO&ceid=BO:es-419'
+    url: 'https://news.google.com/rss/search?q=bolivia+(litio+OR+uyuni+OR+ypfb+OR+mutun+OR+"gas+natural")+when:45d&hl=es-419&gl=BO&ceid=BO:es-419'
   },
   {
     country: 'REGIONAL',
     pillar: 'GEOPOLITICS_DIPLOMACY',
     name: 'Cono Sur Geopolítica Regional',
-    url: 'https://news.google.com/rss/search?q=("cono+sur"+OR+mercosur)+AND+(comercio+OR+tratado+OR+cancilleria+OR+cumbre)&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("cono+sur"+OR+mercosur)+AND+(comercio+OR+tratado+OR+cancilleria+OR+cumbre)+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   }
 ];
 
@@ -210,7 +210,34 @@ class RegionalIntelCollector {
     return STRATEGIC_KEYWORDS.some(kw => t.includes(kw));
   }
 
+  public isAnimalNoise(text: string): boolean {
+    const lower = text.toLowerCase();
+    const animalTerms = [
+      'aquarium', 'san diego', 'marine mammal', 'león marino', 'leones marinos',
+      'sea lion pup', 'sea lion rescue', 'otaria flavescens', 'predation of salmon',
+      'predation of steelhead', 'plastic band wrapped around neck', 'bird flu could wipe out',
+      'injured sea lion', 'sea lion killing bill'
+    ];
+    const hasAnimal = animalTerms.some(t => lower.includes(t));
+    if (!hasAnimal) return false;
+
+    // Only allow if clearly an offshore energy article
+    const hasEnergyContext =
+      lower.includes('navitas') ||
+      lower.includes('rockhopper') ||
+      lower.includes('borders & southern') ||
+      lower.includes('petroleum') ||
+      lower.includes('fpso') ||
+      lower.includes('offshore energy') ||
+      lower.includes('hidrocarburo') ||
+      lower.includes('falklands oil') ||
+      lower.includes('malvinas petroleo');
+
+    return !hasEnergyContext;
+  }
+
   public isStrategicallyValid(text: string): boolean {
+    if (this.isAnimalNoise(text)) return false;
     if (this.isBlacklistedContent(text)) return false;
     return this.isStrategicallyRelevant(text);
   }
@@ -299,22 +326,74 @@ class RegionalIntelCollector {
         const processedItems: IntelItem[] = [];
 
         for (const raw of rssItems.slice(0, 10)) { // Inspect recent items from feed
-          const title = this.cleanText(raw.title || '');
+          const rawTitle = this.cleanText(raw.title || '');
           const link = raw.link || '';
           const description = this.cleanText(raw.description || raw.summary || '');
           const pubDate = raw.pubDate || raw.published || raw.updated || new Date().toISOString();
-          const combinedText = `${title} ${description}`;
 
-          if (!title || title.length < 12) continue;
+          if (!rawTitle || rawTitle.length < 12) continue;
 
-          // STRICT RELEVANCE GATE: Reject football, sports, gossip or items without strategic focus
+          // 1. FRESHNESS GATE: Discard historical or outdated items (> 60 days old)
+          const itemDate = new Date(pubDate);
+          const maxAgeMs = 60 * 24 * 60 * 60 * 1000;
+          if (!isNaN(itemDate.getTime()) && itemDate.getTime() < Date.now() - maxAgeMs) {
+            continue;
+          }
+
+          // 2. Extract Publisher and Clean Title (Strip " - Publisher" from headline)
+          let cleanTitle = rawTitle;
+          let detectedPublisher = '';
+
+          if (raw.source) {
+            if (typeof raw.source === 'string') detectedPublisher = raw.source.trim();
+            else if (raw.source['#text']) detectedPublisher = String(raw.source['#text']).trim();
+            else if (raw.source['_']) detectedPublisher = String(raw.source['_']).trim();
+          }
+
+          if (cleanTitle.includes(' - ')) {
+            const parts = cleanTitle.split(' - ');
+            if (parts.length >= 2) {
+              const candidate = parts[parts.length - 1].trim();
+              if (
+                candidate.length > 1 &&
+                candidate.length < 45 &&
+                !candidate.includes('"') &&
+                !candidate.includes(' OR ') &&
+                !candidate.includes(' AND ') &&
+                !candidate.includes('(') &&
+                !candidate.toLowerCase().includes('google news')
+              ) {
+                if (!detectedPublisher) detectedPublisher = candidate;
+                cleanTitle = parts.slice(0, parts.length - 1).join(' - ').trim();
+              }
+            }
+          }
+
+          // Sanitize source so boolean queries or "Google News" are never exposed
+          let finalSource = detectedPublisher;
+          const isInvalidSource =
+            !finalSource ||
+            finalSource.includes('Google News') ||
+            finalSource.includes(' OR ') ||
+            finalSource.includes(' AND ') ||
+            finalSource.includes('"') ||
+            finalSource.includes('(') ||
+            finalSource.length > 45;
+
+          if (isInvalidSource) {
+            finalSource = source.name.replace(/\s*-\s*Google News.*$/i, '').trim();
+          }
+
+          const combinedText = `${cleanTitle} ${description}`;
+
+          // 3. STRICT RELEVANCE GATE: Reject sports, gossip, animal noise, or items without strategic focus
           if (!this.isStrategicallyValid(combinedText)) {
             continue;
           }
 
           // Check if already in database
           const existing = this.items.some(i => 
-            i.title.toLowerCase() === title.toLowerCase() || 
+            i.title.toLowerCase() === cleanTitle.toLowerCase() || 
             (i.sourceUrl && typeof link === 'string' && i.sourceUrl === link)
           );
 
@@ -325,15 +404,15 @@ class RegionalIntelCollector {
 
             const newItem: IntelItem = {
               id: `feed-${source.id}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-              title,
-              summary: description.length > 280 ? description.substring(0, 277) + '...' : description || title,
+              title: cleanTitle,
+              summary: description.length > 280 ? description.substring(0, 277) + '...' : description || cleanTitle,
               content: description,
-              source: source.name,
+              source: finalSource,
               sourceUrl: typeof link === 'string' ? link : link?.['@_href'] || source.url,
               country: source.country,
               pillar: detectedPillar,
               level: detectedLevel,
-              timestamp: new Date(pubDate).toISOString(),
+              timestamp: !isNaN(itemDate.getTime()) ? itemDate.toISOString() : new Date().toISOString(),
               tags,
               verified: true
             };
