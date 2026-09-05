@@ -1,5 +1,6 @@
 import { IntelItem, CountryCode, StrategicPillar, AlertLevel } from '../types';
 import { REGIONAL_SOURCES } from '../data/staticData';
+import { sanitizeSourceName, isRecentDate, isSeaLionAnimalNoise, sanitizeIntelItem } from './intelSanitizer';
 
 // Blacklist of non-geopolitical / sports / entertainment / domestic petty crime / lifestyle terms
 const BLACKLISTED_TERMS = [
@@ -41,7 +42,13 @@ const BLACKLISTED_TERMS = [
   'carta astral', 'tarot', 'quiniela', 'lotería', 'loteria', 'quini 6', 'telekino', 'bingo',
   'receta de', 'cómo preparar', 'ingredientes para', 'calorías', 'dieta para', 'adelgazar',
   'rutina facial', 'cuidado de la piel', 'tips de belleza', 'moda verano', 'moda otoño',
-  'pronóstico del tiempo para el fin de semana', 'lluvia en la ciudad', 'calor agobiante en'
+  'pronóstico del tiempo para el fin de semana', 'lluvia en la ciudad', 'calor agobiante en',
+
+  // 5. ANIMAL & WILDLIFE NOISE (accidental matches for "Sea Lion" project)
+  'aquarium', 'san diego', 'marine mammal', 'león marino', 'leones marinos',
+  'sea lion pup', 'sea lion rescue', 'otaria flavescens', 'predation of salmon',
+  'predation of steelhead', 'plastic band wrapped around neck', 'bird flu could wipe out',
+  'injured sea lion', 'sea lion killing bill'
 ];
 
 // High-confidence primary strategic terms: presence of ANY of these indicates strategic relevance
@@ -100,37 +107,37 @@ const STRATEGIC_LIVE_FEEDS: { country: CountryCode; pillar: StrategicPillar; nam
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Atlántico Sur & Soberanía Malvinas',
-    url: 'https://news.google.com/rss/search?q=("atlantico+sur"+OR+malvinas+OR+"falkland"+OR+"antartida"+OR+"pasaje+de+drake"+OR+"canal+beagle"+OR+"base+marambio"+OR+"tratado+antartico")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("atlantico+sur"+OR+malvinas+OR+"falkland"+OR+"antartida"+OR+"pasaje+de+drake"+OR+"canal+beagle"+OR+"base+marambio"+OR+"tratado+antartico")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Control Marítimo ZEE, Milla 201 & Pesca',
-    url: 'https://news.google.com/rss/search?q=("milla+201"+OR+"mar+argentino"+OR+"pesca+ilegal"+OR+"zona+economica+exclusiva"+OR+"prefectura+naval"+OR+"patrullero+oceanico"+OR+"armada+argentina")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("milla+201"+OR+"mar+argentino"+OR+"pesca+ilegal"+OR+"zona+economica+exclusiva"+OR+"prefectura+naval"+OR+"patrullero+oceanico"+OR+"armada+argentina")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Polo Ushuaia, Magallanes & Antártida',
-    url: 'https://news.google.com/rss/search?q=("base+naval+ushuaia"+OR+"polo+logistico+antartico"+OR+"estrecho+de+magallanes"+OR+"rompehielos+irizar"+OR+"p-3+orion"+OR+"radares+tierra+del+fuego")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("base+naval+ushuaia"+OR+"polo+logistico+antartico"+OR+"estrecho+de+magallanes"+OR+"rompehielos+irizar"+OR+"p-3+orion"+OR+"radares+tierra+del+fuego")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'REGIONAL',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'OSINT Sea Lion & Hidrocarburos Atlántico Sur',
-    url: 'https://news.google.com/rss/search?q=("Sea+Lion"+OR+"Navitas+Petroleum"+OR+"Rockhopper+Exploration"+OR+"Borders+and+Southern"+OR+"Falklands+oil"+OR+"Malvinas+petroleo"+OR+"offshore+energy")&hl=en&gl=US&ceid=US:en'
+    url: 'https://news.google.com/rss/search?q=(("Sea+Lion"+AND+(oil+OR+petroleum+OR+offshore+OR+field+OR+fpso+OR+navitas+OR+rockhopper+OR+falklands+OR+malvinas))+OR+"Navitas+Petroleum"+OR+"Rockhopper+Exploration"+OR+"Borders+and+Southern"+OR+"Falklands+oil"+OR+"Malvinas+petroleo")+when:45d&hl=en&gl=US&ceid=US:en'
   },
   {
     country: 'REGIONAL',
     pillar: 'ECONOMY_COMMODITIES',
     name: 'OSINT Pesca Atlántico Sur & FIFCA',
-    url: 'https://news.google.com/rss/search?q=("Falkland+Islands+fisheries"+OR+FIFCA+OR+"calamar+Loligo"+OR+"squid+fishery"+OR+"Milla+201"+OR+"pesca+ilegal+Malvinas")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("Falkland+Islands+fisheries"+OR+FIFCA+OR+"calamar+Loligo"+OR+"squid+fishery"+OR+"Milla+201"+OR+"pesca+ilegal+Malvinas")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'GEOPOLITICS_DIPLOMACY',
     name: 'OSINT Diplomacia Soberanía Malvinas & FCDO',
-    url: 'https://news.google.com/rss/search?q=("Cancilleria+Argentina"+OR+"FCDO"+OR+"Mount+Pleasant"+OR+"soberania+Malvinas"+OR+"Falklands+referendum")&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("Cancilleria+Argentina"+OR+"FCDO"+OR+"Mount+Pleasant"+OR+"soberania+Malvinas"+OR+"Falklands+referendum")+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
 
   // Regional Pillars
@@ -138,70 +145,75 @@ const STRATEGIC_LIVE_FEEDS: { country: CountryCode; pillar: StrategicPillar; nam
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
     name: 'OSINT Argentina (Defensa & Fuerzas Armadas)',
-    url: 'https://news.google.com/rss/search?q=argentina+(defensa+OR+"fuerzas+armadas"+OR+"armada+argentina"+OR+radares+OR+"fuerza+aerea"+OR+invap)&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=argentina+(defensa+OR+"fuerzas+armadas"+OR+"armada+argentina"+OR+radares+OR+"fuerza+aerea"+OR+invap)+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'Energía Cono Sur (Vaca Muerta & Gasoductos)',
-    url: 'https://news.google.com/rss/search?q=("vaca+muerta"+OR+"gasoducto+norte"+OR+"hidrocarburos"+OR+gnl)+argentina&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("vaca+muerta"+OR+"gasoducto+norte"+OR+"hidrocarburos"+OR+gnl)+argentina+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'CL',
     pillar: 'ECONOMY_COMMODITIES',
     name: 'Chile Estratégico (Litio, Cobre & Minería)',
-    url: 'https://news.google.com/rss/search?q=chile+(litio+OR+cobre+OR+codelco+OR+"estrategia+nacional+del+litio"+OR+"puerto+antofagasta")&hl=es-419&gl=CL&ceid=CL:es-419'
+    url: 'https://news.google.com/rss/search?q=chile+(litio+OR+cobre+OR+codelco+OR+"estrategia+nacional+del+litio"+OR+"puerto+antofagasta")+when:45d&hl=es-419&gl=CL&ceid=CL:es-419'
   },
   {
     country: 'BR',
     pillar: 'DEFENSE_SECURITY',
     name: 'Brasil Geopolítica & Fronteras',
-    url: 'https://news.google.com/rss/search?q=brasil+("defesa+nacional"+OR+"seguranca+fronteiras"+OR+"itaipu"+OR+"porto+de+santos"+OR+mercosul)&hl=pt-419&gl=BR&ceid=BR:pt-419'
+    url: 'https://news.google.com/rss/search?q=brasil+("defesa+nacional"+OR+"seguranca+fronteiras"+OR+"itaipu"+OR+"porto+de+santos"+OR+mercosul)+when:45d&hl=pt-419&gl=BR&ceid=BR:pt-419'
   },
   {
     country: 'PY',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'Paraguay & Hidrovía Paraná',
-    url: 'https://news.google.com/rss/search?q=paraguay+(hidrovia+OR+"rio+paraguay"+OR+"senad"+OR+"itaipu+anexo+c"+OR+"corredor+bioceanico")&hl=es-419&gl=PY&ceid=PY:es-419'
+    url: 'https://news.google.com/rss/search?q=paraguay+(hidrovia+OR+"rio+paraguay"+OR+"senad"+OR+"itaipu+anexo+c"+OR+"corredor+bioceanico")+when:45d&hl=es-419&gl=PY&ceid=PY:es-419'
   },
   {
     country: 'UY',
     pillar: 'ENERGY_INFRASTRUCTURE',
     name: 'Uruguay Puertos & Geoeconomía',
-    url: 'https://news.google.com/rss/search?q=uruguay+("puerto+de+montevideo"+OR+dragado+OR+celulosa+OR+mercosur)&hl=es-419&gl=UY&ceid=UY:es-419'
+    url: 'https://news.google.com/rss/search?q=uruguay+("puerto+de+montevideo"+OR+dragado+OR+celulosa+OR+mercosur)+when:45d&hl=es-419&gl=UY&ceid=UY:es-419'
   },
   {
     country: 'BO',
     pillar: 'ECONOMY_COMMODITIES',
     name: 'Bolivia Recursos (Litio Uyuni & Gas)',
-    url: 'https://news.google.com/rss/search?q=bolivia+(litio+OR+uyuni+OR+ypfb+OR+mutun+OR+"gas+natural")&hl=es-419&gl=BO&ceid=BO:es-419'
+    url: 'https://news.google.com/rss/search?q=bolivia+(litio+OR+uyuni+OR+ypfb+OR+mutun+OR+"gas+natural")+when:45d&hl=es-419&gl=BO&ceid=BO:es-419'
   },
   {
     country: 'REGIONAL',
     pillar: 'GEOPOLITICS_DIPLOMACY',
     name: 'Cono Sur Geopolítica Regional',
-    url: 'https://news.google.com/rss/search?q=("cono+sur"+OR+mercosur)+AND+(comercio+OR+tratado+OR+cancilleria+OR+cumbre)&hl=es-419&gl=AR&ceid=AR:es-419'
+    url: 'https://news.google.com/rss/search?q=("cono+sur"+OR+mercosur)+AND+(comercio+OR+tratado+OR+cancilleria+OR+cumbre)+when:45d&hl=es-419&gl=AR&ceid=AR:es-419'
   }
 ];
 
 function isContentStrategic(title: string, summary: string): boolean {
   const fullText = `${title} ${summary}`.toLowerCase();
   
-  // 1. Strict blacklist rejection (sports, entertainment, petty crimes, lifestyle)
+  // 1. Filter out animal noise for "Sea Lion"
+  if (isSeaLionAnimalNoise(fullText)) {
+    return false;
+  }
+
+  // 2. Strict blacklist rejection (sports, entertainment, petty crimes, lifestyle)
   for (const term of BLACKLISTED_TERMS) {
     if (fullText.includes(term)) {
       return false;
     }
   }
 
-  // 2. Primary strategic keyword verification
+  // 3. Primary strategic keyword verification
   for (const kw of PRIMARY_STRATEGIC_TERMS) {
     if (fullText.includes(kw)) {
       return true;
     }
   }
 
-  // 3. Secondary contextual verification: requires co-occurrence of actor AND secondary term
+  // 4. Secondary contextual verification: requires co-occurrence of actor AND secondary term
   const hasActor = GEOPOLITICAL_ACTORS.some(actor => fullText.includes(actor));
   const hasSecondary = SECONDARY_TERMS.some(term => fullText.includes(term));
   
@@ -303,13 +315,24 @@ async function fetchFeedContent(targetUrl: string): Promise<{ items: Partial<Int
     if (res.ok) {
       const data = await res.json();
       if (data.status === 'ok' && Array.isArray(data.items) && data.items.length > 0) {
-        const parsedItems: Partial<IntelItem>[] = data.items.map((it: any) => ({
-          title: it.title || '',
-          summary: (it.description || it.content || '').replace(/<[^>]*>?/gm, '').slice(0, 300),
-          sourceUrl: it.link || targetUrl,
-          timestamp: it.pubDate ? new Date(it.pubDate).toISOString() : new Date().toISOString(),
-          source: it.author || data.feed?.title || ''
-        }));
+        const parsedItems: Partial<IntelItem>[] = [];
+        for (const it of data.items) {
+          if (!it.title) continue;
+          if (it.pubDate && !isRecentDate(it.pubDate)) continue;
+          const { cleanSource, cleanTitle } = sanitizeSourceName(
+            it.author || data.feed?.title || '',
+            it.title,
+            it.link || targetUrl,
+            'OSINT Cono Sur'
+          );
+          parsedItems.push({
+            title: cleanTitle || it.title,
+            summary: (it.description || it.content || '').replace(/<[^>]*>?/gm, '').slice(0, 300),
+            sourceUrl: it.link || targetUrl,
+            timestamp: it.pubDate ? new Date(it.pubDate).toISOString() : new Date().toISOString(),
+            source: cleanSource
+          });
+        }
         return { items: parsedItems };
       }
     }
@@ -384,15 +407,18 @@ function parseXmlFeed(
                  sourceInfo.url;
       const pubDate = node.querySelector('pubDate, updated, published, dc\\:date')?.textContent?.trim();
 
-      // For Google News feeds, the source is after the last hyphen (e.g. "Title - Clarín")
-      let detectedSource = sourceInfo.name;
-      if (rawTitle.includes(' - ')) {
-        const parts = rawTitle.split(' - ');
-        if (parts.length >= 2) {
-          detectedSource = parts[parts.length - 1].trim();
-          rawTitle = parts.slice(0, parts.length - 1).join(' - ').trim();
-        }
+      // Freshness Gate: Discard older than 60 days (e.g. 2024 news)
+      if (pubDate && !isRecentDate(pubDate)) {
+        return;
       }
+
+      // Clean source and title using sanitizeSourceName
+      const { cleanSource, cleanTitle } = sanitizeSourceName(
+        sourceInfo.name,
+        rawTitle,
+        link,
+        sourceInfo.name
+      );
 
       // Clean HTML tags and entities
       const cleanSummary = description
@@ -402,14 +428,15 @@ function parseXmlFeed(
         .replace(/&#8217;/g, "'")
         .slice(0, 300);
 
-      if (!rawTitle || rawTitle.length < 10) return;
+      const finalTitle = cleanTitle || rawTitle;
+      if (!finalTitle || finalTitle.length < 10) return;
 
       // Filter strategic relevance
-      if (!isContentStrategic(rawTitle, cleanSummary)) {
+      if (!isContentStrategic(finalTitle, cleanSummary)) {
         return;
       }
 
-      const combinedText = `${rawTitle} ${cleanSummary}`;
+      const combinedText = `${finalTitle} ${cleanSummary}`;
       const pillar = determinePillar(combinedText, sourceInfo.defaultPillar);
       const level = determineLevel(combinedText);
       const tags = extractTags(combinedText, sourceInfo.country);
@@ -424,10 +451,10 @@ function parseXmlFeed(
 
       items.push({
         id: `osint-feed-${sourceInfo.country.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        title: rawTitle,
-        summary: cleanSummary || rawTitle,
+        title: finalTitle,
+        summary: cleanSummary || finalTitle,
         content: cleanSummary,
-        source: detectedSource || sourceInfo.name,
+        source: cleanSource,
         sourceUrl: link,
         country: sourceInfo.country,
         pillar,
@@ -479,7 +506,10 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
           const parsed = parseXmlFeed(result, feed);
           parsed.forEach(item => {
             if (item.title) {
-              newItems.push(item as IntelItem);
+              const sanitized = sanitizeIntelItem(item as IntelItem);
+              if (sanitized) {
+                newItems.push(sanitized);
+              }
             }
           });
         } else if (result.items && Array.isArray(result.items)) {
@@ -488,7 +518,7 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
             const combinedText = `${rawItem.title} ${rawItem.summary || ''}`;
             if (!isContentStrategic(rawItem.title, rawItem.summary || '')) return;
 
-            newItems.push({
+            const itemCandidate: IntelItem = {
               id: `osint-json-${feed.country.toLowerCase()}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
               title: rawItem.title,
               summary: rawItem.summary || rawItem.title,
@@ -501,7 +531,12 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
               timestamp: rawItem.timestamp || new Date().toISOString(),
               tags: extractTags(combinedText, feed.country),
               verified: true
-            });
+            };
+
+            const sanitized = sanitizeIntelItem(itemCandidate);
+            if (sanitized) {
+              newItems.push(sanitized);
+            }
           });
         }
       }
@@ -512,9 +547,12 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
 
   await Promise.allSettled(fetchPromises);
 
-  // If no new items obtained, return existing
+  // If no new items obtained, return sanitized existing items
   if (newItems.length === 0) {
-    return { updatedItems: existingItems, newCount: 0, feedsChecked };
+    const sanitizedExisting = existingItems
+      .map(it => sanitizeIntelItem(it))
+      .filter((it): it is IntelItem => it !== null);
+    return { updatedItems: sanitizedExisting, newCount: 0, feedsChecked };
   }
 
   // Deduplicate against existing items and within newly fetched items
@@ -536,12 +574,14 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
     }
   }
 
-  // Add existing items
+  // Add existing items (also sanitized to clean up any previously stored raw query sources or stale dates)
   for (const item of existingItems) {
-    const key = item.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 35);
+    const sanitized = sanitizeIntelItem(item);
+    if (!sanitized) continue;
+    const key = sanitized.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 35);
     if (!seenTitles.has(key)) {
       seenTitles.add(key);
-      merged.push(item);
+      merged.push(sanitized);
     }
   }
 
