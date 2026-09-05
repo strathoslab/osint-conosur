@@ -132,6 +132,39 @@ export const STRATEGIC_NODES: StrategicNode[] = [
     status: 'OPERATIONAL',
     details: 'Represa binacional Argentina-Paraguay (3.200 MW). Clave para el caudal navegable del Alto Paraná y suministro eléctrico a la red argentina.',
     keyCommoditiesOrAssets: ['3.200 MW Energía Eléctrica', 'Esclusa de navegación de barcazas']
+  },
+  {
+    id: 'node-atlantico-milla201',
+    name: 'Agujero Azul / Milla 201 (Control Pesquero ZEE)',
+    category: 'STRATEGIC_PASS',
+    country: 'AR',
+    lat: -45.50,
+    lng: -60.20,
+    status: 'ALERT',
+    details: 'Epicentro de fricción por pesca ilegal no regulada (INDNR) en el Atlántico Sur. Concentración de más de 400 poteros extranjeros (calamar Illex y merluza negra) y patrullaje de OPV de la Armada y Prefectura.',
+    keyCommoditiesOrAssets: ['Calamar Illex', 'Merluza Negra', 'Vigilancia ZEE Milla 201']
+  },
+  {
+    id: 'node-base-marambio',
+    name: 'Base Antártica Conjunta Marambio (Isla Seymour)',
+    category: 'MILITARY_BASE',
+    country: 'AR',
+    lat: -64.24,
+    lng: -56.62,
+    status: 'OPERATIONAL',
+    details: 'Nodo logístico aéreo permanente de Argentina y el Cono Sur en la Antártida. Pista de tierra apta para Hércules C-130 y abastecimiento de bases científicas del Tratado Antártico.',
+    keyCommoditiesOrAssets: ['Presencia Soberana Permanente', 'Pista Logística Aérea C-130', 'Investigación Polar']
+  },
+  {
+    id: 'node-base-puerto-belgrano',
+    name: 'Base Naval Puerto Belgrano & Comando Flota de Mar',
+    category: 'MILITARY_BASE',
+    country: 'AR',
+    lat: -38.89,
+    lng: -62.10,
+    status: 'OPERATIONAL',
+    details: 'Principal complejo naval y astillero militar de Argentina. Base de los destructores MEKO 360, corbetas y patrulleros oceánicos para despliegue en el Atlántico Sur y Bahía Blanca.',
+    keyCommoditiesOrAssets: ['Flota de Mar', 'Dique de Carena', 'Patrulleros Oceánicos OPV']
   }
 ];
 
@@ -492,5 +525,49 @@ export const INITIAL_INTEL_ITEMS: IntelItem[] = [
     entities: ['Itaipú Binacional', 'Cancillería Paraguay', 'Itamaraty'],
     threatAssessment: 'Impacto en los ingresos fiscales del Estado paraguayo y en las tarifas eléctricas residenciales de ambos países.',
     verified: true
+  },
+  {
+    id: 'intel-009',
+    title: 'Operación Control del Mar Argentino: Despliegue de OPV y Patrullaje Aeroespacial P-3 Orion en la Milla 201',
+    summary: 'La Prefectura Naval Argentina y el Comando de Operaciones Navales de la Armada coordinan la vigilancia satelital y marítima sobre el Agujero Azul, disuadiendo incursiones de flotas poteras internacionales dentro de la Zona Económica Exclusiva (ZEE).',
+    content: 'Con el apoyo del nuevo sistema de monitoreo satelital GUARDACONSTAS PRO y vuelos de exploración de aviones P-3C Orion recientemente incorporados, se verificó la posición de más de 350 pesqueros extranjeros en aguas adyacentes a la ZEE. Se labraron actas por apagado deliberado de transpondedores AIS en el límite exterior.',
+    source: 'Revista Puerto / Armada Argentina',
+    sourceUrl: 'https://revistapuerto.com.ar',
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    level: 'HIGH',
+    timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    location: {
+      name: 'Agujero Azul / Milla 201 (Mar Argentino)',
+      lat: -45.50,
+      lng: -60.20
+    },
+    tags: ['Atlántico Sur', 'Milla 201', 'Pesca ZEE', 'Armada Argentina', 'Prefectura', 'P-3 Orion'],
+    entities: ['Armada Argentina', 'Prefectura Naval Argentina', 'Comando Conjunto Marítimo'],
+    threatAssessment: 'Riesgo alto de sobrepesca de calamar Illex e incursiones no autorizadas con AIS inactivo durante nocturnidad.',
+    verified: true,
+    bookmarked: true
+  },
+  {
+    id: 'intel-010',
+    title: 'Campaña Antártica de Verano: Rompehielos ARA Irízar y Polo Ushuaia Culminan Abastecimiento Estratégico',
+    summary: 'El Comando Conjunto Antártico completó el reabastecimiento de combustible antártico y víveres para las trece bases argentinas, consolidando a Ushuaia como cabecera logística de proyección al continente blanco y el Pasaje de Drake.',
+    content: 'Las maniobras concluyeron con el desembarco de módulos científicos en las bases permanentes Marambio, Esperanza y Belgrano II. El Ministerio de Defensa reafirmó la licitación de los muelles de aguas profundas del Polo Logístico Antártico de Ushuaia frente al incremento de tráfico científico internacional.',
+    source: 'Gaceta Marinera / Comando Conjunto Antártico',
+    sourceUrl: 'https://gacetamarinera.com.ar',
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    level: 'MEDIUM',
+    timestamp: new Date(Date.now() - 1000 * 60 * 95).toISOString(),
+    location: {
+      name: 'Base Naval Ushuaia / Pasaje de Drake',
+      lat: -54.81,
+      lng: -68.30
+    },
+    tags: ['Atlántico Sur', 'Antártida', 'Rompehielos Irízar', 'Ushuaia', 'Base Marambio', 'Soberanía'],
+    entities: ['Comando Conjunto Antártico', 'Armada Argentina', 'Dirección Nacional del Antártico'],
+    threatAssessment: 'Operación logística normalizada; control soberano pleno de las rutas de aproximación austral.',
+    verified: true,
+    bookmarked: false
   }
 ];
