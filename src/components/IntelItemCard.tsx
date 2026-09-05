@@ -29,6 +29,10 @@ export const IntelItemCard: React.FC<IntelItemCardProps> = ({
   const pillar = PILLAR_INFO[item.pillar] || PILLAR_INFO.GEOPOLITICS_DIPLOMACY;
   const alertMeta = ALERT_LEVEL_INFO[item.level] || ALERT_LEVEL_INFO.ROUTINE;
 
+  const displaySource = item.source && (item.source.includes(' OR ') || item.source.startsWith('(') || item.source.includes('Google News'))
+    ? (item.source.replace(/\s*-\s*Google News.*$/i, '').replace(/["()]/g, '').slice(0, 35).trim() || 'OSINT Cono Sur')
+    : (item.source || 'OSINT Cono Sur');
+
   const renderPillarIcon = () => {
     switch (item.pillar) {
       case 'DEFENSE_SECURITY':
@@ -103,7 +107,7 @@ export const IntelItemCard: React.FC<IntelItemCardProps> = ({
       <div className="pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 font-mono">
         <div className="flex items-center gap-3 truncate">
           <span className="truncate text-slate-300 font-medium">
-            {item.source}
+            {displaySource}
           </span>
           {item.location && (
             <span className="flex items-center gap-1 text-slate-400 hidden sm:inline-flex">
