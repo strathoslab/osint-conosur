@@ -1,40 +1,144 @@
 import { IntelItem, CountryCode, StrategicPillar, AlertLevel } from '../types';
 import { REGIONAL_SOURCES } from '../data/staticData';
 
-// Blacklist of non-geopolitical / sports / entertainment terms
+// Blacklist of non-geopolitical / sports / entertainment / domestic petty crime / lifestyle terms
 const BLACKLISTED_TERMS = [
+  // 1. SPORTS (fútbol, tenis, automovilismo, básquet, boxeo, etc.)
   'fútbol', 'futbol', 'futebol', 'gol ', 'goles', 'partido de', 'campeonato', 'torneo',
-  'copa libertadores', 'copa sudamericana', 'champions league', 'liga profesional', 'brasileirão',
-  'boca juniors', 'river plate', 'flamengo', 'palmeiras', 'colo-colo', 'colo colo', 'u de chile',
+  'copa libertadores', 'copa sudamericana', 'champions league', 'liga profesional', 'brasileirão', 'brasileirao',
+  'boca juniors', 'river plate', 'racing club', 'san lorenzo', 'independiente', 'flamengo', 'palmeiras',
+  'corinthians', 'são paulo fc', 'santos fc', 'colo-colo', 'colo colo', 'u de chile', 'universidad de chile',
   'peñarol', 'nacional de montevideo', 'olimpia', 'cerro porteño', 'bolívar', 'the strongest',
-  'messi', 'ronaldo', 'vinicius', 'neymar', 'scaloni', 'bielsa', 'director técnico', 'árbitro',
-  'penal', 'delantero', 'mediocampista', 'defensor', 'plantel', 'fichaje', 'refuerzo', 'estadio',
-  'espectáculos', 'farandula', 'farándula', 'chimentos', 'reality', 'gran hermano', 'showmatch',
-  'horóscopo', 'telenovela', 'receta', 'astrología', 'zodiaco', 'famosos', 'alfombra roja',
-  'celebridad', 'tenis', 'fórmula 1', 'f1 ', 'gran premio', 'boxeo', 'básquet', 'rugby', 'pumas',
-  'influencer', 'tiktoker', 'streamer', 'estreno de cine'
+  'messi', 'ronaldo', 'vinicius', 'neymar', 'mbappé', 'mbappe', 'scaloni', 'bielsa', 'director técnico', 'director tecnico',
+  'árbitro', 'arbitro', 'var ', 'penal', 'delantero', 'mediocampista', 'defensor', 'arquero', 'plantel', 'fichaje',
+  'mercado de pases', 'refuerzo', 'estadio', 'tribuna', 'hinchada', 'barrabrava', 'superclásico', 'clasico',
+  'tenis', 'grand slam', 'roland garros', 'wimbledon', 'us open', 'atp', 'wta', 'alcaraz', 'djokovic', 'sinner',
+  'pádel', 'padel', 'fórmula 1', 'formula 1', 'f1 ', 'colapinto', 'verstappen', 'hamilton', 'gran premio',
+  'automovilismo', 'tc2000', 'turismo carretera', 'boxeo', 'pelea por el título', 'ufc', 'mma', 'ko ', 'básquet',
+  'basquet', 'nba', 'rugby', 'pumas', 'all blacks', 'golf',
+
+  // 2. SHOWBIZ, ENTERTAINMENT & CELEBRITIES
+  'espectáculos', 'espectaculos', 'farandula', 'farándula', 'chimentos', 'intrusos', 'showmatch', 'bailando',
+  'gran hermano', 'masterchef', 'reality', 'romance', 'noviazgo', 'separación de', 'separacion de', 'divorcio',
+  'infidelidad', 'casamiento', 'boda', 'luna de miel', 'panelista', 'famosos', 'famosa', 'celebridad',
+  'alfombra roja', 'gala', 'look', 'vestido', 'bikini', 'mar del plata teatro', 'carlos paz teatro',
+  'estreno de cine', 'estreno en cines', 'taquilla', 'netflix', 'hbo max', 'disney+', 'amazon prime',
+  'serie de', 'temporada de', 'capítulo de', 'trailer oficial', 'influencer', 'tiktoker', 'streamer',
+  'youtuber', 'viral de tiktok', 'viral en redes', 'meme', 'premios oscar', 'emmy', 'grammy', 'martín fierro',
+  'recital', 'concierto', 'entradas agotadas', 'sold out', 'movistar arena', 'lollapalooza',
+
+  // 3. PETTY CRIMES, DOMESTIC ACCIDENTS & ROAD TRAFFIC (crónica roja urbana cotidiana)
+  'accidente de tránsito', 'accidente de transito', 'choque frontal', 'choque en cadena', 'siniestro vial',
+  'vuelco de', 'despiste', 'semáforo', 'atropelló a', 'atropello a', 'motochorro', 'motochorros',
+  'arrebato', 'robo de celular', 'robo de billetera', 'asalto a mano armada', 'entradera', 'salidera',
+  'ladrones ingresaron', 'delincuentes armados', 'aprehendieron a', 'homicidio en riña', 'apuñalado en',
+  'pelea de boliche', 'femicidio', 'abuso sexual', 'violencia de género', 'violencia familiar',
+  'estafa telefónica', 'estafa telefonica', 'estafas virtuales', 'cuento del tío', 'cuento del tio',
+  'clonación de tarjeta', 'usurpación de terreno', 'pelea vecinal', 'ruidos molestos', 'incendio de vivienda',
+
+  // 4. LIFESTYLE, ASTROLOGY & DAILY METEOROLOGY
+  'horóscopo', 'horoscopo', 'signos del zodíaco', 'signo del zodiaco', 'astrología', 'astrologia',
+  'carta astral', 'tarot', 'quiniela', 'lotería', 'loteria', 'quini 6', 'telekino', 'bingo',
+  'receta de', 'cómo preparar', 'ingredientes para', 'calorías', 'dieta para', 'adelgazar',
+  'rutina facial', 'cuidado de la piel', 'tips de belleza', 'moda verano', 'moda otoño',
+  'pronóstico del tiempo para el fin de semana', 'lluvia en la ciudad', 'calor agobiante en'
 ];
 
-const STRATEGIC_KEYWORDS = [
-  'defensa', 'militar', 'armada', 'fuerza aérea', 'fuerzas armadas', 'ejército', 'cancillería',
-  'canciller', 'relaciones exteriores', 'ministro', 'presidente', 'embajador', 'tratado',
-  'soberanía', 'soberania', 'frontera', 'hidrovía', 'hidrovia', 'puerto', 'aduana', 'litio', 'cobre',
-  'vaca muerta', 'gasoducto', 'oleoducto', 'petróleo', 'petroleo', 'itaipú', 'itaipu', 'yacyretá', 'yacyreta',
-  'banco central', 'reservas', 'inflación', 'inflacion', 'deuda', 'aranceles', 'mercosur', 'brics', 'seguridad',
-  'narcotráfico', 'narcotrafico', 'crimen organizado', 'pcc', 'comando vermelho', 'ciberataque', 'ransomware',
-  'inteligencia', 'senad', 'prefectura', 'gendarmería', 'gendarmeria', 'policía', 'policia', 'antártida', 'antartida', 'atlántico', 'atlantico',
-  'bioceánico', 'bioceanico', 'soja', 'granos', 'minería', 'mineria', 'codelco', 'ypfb', 'ypf',
-  'petrobras', 'transición energética', 'acuerdo bilateral', 'inversión', 'inversion', 'exportación', 'exportacion', 'comercio exterior',
-  'gobierno', 'senado', 'diputados', 'ley', 'reforma', 'crisis', 'tensión', 'tension', 'conflicto', 'política', 'politica', 'economía', 'economia'
+// High-confidence primary strategic terms: presence of ANY of these indicates strategic relevance
+const PRIMARY_STRATEGIC_TERMS = [
+  // Atlántico Sur, Soberanía & Geopolítica Marítima
+  'atlántico sur', 'atlantico sur', 'malvinas', 'falklands', 'falkland islands', 'georgias del sur', 'sandwich del sur',
+  'antártida', 'antartida', 'tratado antártico', 'pasaje de drake', 'canal beagle', 'estrecho de magallanes',
+  'milla 201', 'agujero azul', 'zona económica exclusiva', 'pesca ilegal', 'indnr', 'buque potero', 'poteros',
+  'calamar illex', 'calamar loligo', 'merluza negra', 'prefectura naval', 'armada argentina', 'patrullero oceánico', 'patrullero oceanico',
+  'rompehielos irízar', 'rompehielos irizar', 'base naval ushuaia', 'base marambio', 'puerto belgrano',
+  'soberanía marítima', 'soberania maritima', 'vigilancia aeroespacial', 'copla', 'plataforma continental',
+  'sea lion', 'navitas', 'navitas petroleum', 'rockhopper', 'rockhopper exploration', 'borders & southern',
+  'borders and southern', 'darwin discovery', 'cuenca malvinas norte', 'cuenca malvinas sur', 'fpso', 'pl032',
+  'fifca', 'fortuna limited', 'penguin news', 'mount pleasant', 'bfsai', 'fcdo', 'ministry of defence',
+  'global fishing watch', 'marinetraffic', 'vesselfinder', 'offshore energy', 'rusi', 'chatham house', 'observatorio malvinas',
+
+  // Defensa, Ciberseguridad & Fronteras
+  'defensa nacional', 'fuerzas armadas', 'fuerza aérea', 'fuerza aerea', 'ejército argentino', 'marina de guerra',
+  'radar', 'radares', 'invap', 'c4isr', 'p-3 orion', 'p3 orion', 'ciberdefensa', 'ciberseguridad',
+  'ransomware', 'ataque cibernético', 'infraestructura crítica', 'triple frontera', 'paso fronterizo',
+  'seguridad fronteriza', 'narcotráfico', 'narcotrafico', 'crimen organizado', 'pcc', 'primeiro comando da capital',
+  'comando vermelho', 'senad', 'gendarmería', 'gendarmeria',
+
+  // Infraestructura Crítica & Geopolítica Energética
+  'hidrovía', 'hidrovia', 'río paraná', 'rio parana', 'río paraguay', 'rio paraguay', 'dragado',
+  'vaca muerta', 'gasoducto', 'oleoducto', 'gnl', 'shale gas', 'cuenca neuquina', 'ypf', 'petrobras', 'ypfb',
+  'itaipú', 'itaipu', 'anexo c', 'yacyretá', 'yacyreta', 'represa hidroeléctrica', 'corredor bioceánico',
+  'puerto de santos', 'puerto de montevideo', 'puerto de rosario', 'up-river',
+
+  // Minería Estratégica & Commodities
+  'litio', 'salar de atacama', 'salar de uyuni', 'hombre muerto', 'cauchari', 'extracción directa de litio',
+  'cobre', 'codelco', 'concentrado de cobre', 'soja', 'harina de soja', 'complejo oleaginoso',
+
+  // Geopolítica de Estado & Macroeconomía
+  'cancillería', 'cancilleria', 'relaciones exteriores', 'itamaraty', 'tratado bilateral', 'acuerdo bilateral',
+  'cumbre presidencial', 'mercosur', 'brics', 'fmi', 'banco central', 'reservas internacionales',
+  'política monetaria', 'aranceles aduaneros', 'balanza comercial'
+];
+
+// Secondary context terms (require co-occurrence with a country/block and strategic context)
+const SECONDARY_TERMS = [
+  'gobierno', 'ministerio', 'ministro', 'presidente', 'embajada', 'embajador', 'comercio exterior',
+  'exportación', 'exportaciones', 'importación', 'inversión extranjera', 'aduanas', 'aranceles',
+  'acuerdo', 'tratado', 'crisis energética', 'tensión diplomática'
+];
+
+const GEOPOLITICAL_ACTORS = [
+  'argentina', 'brasil', 'chile', 'paraguay', 'uruguay', 'bolivia', 'mercosur', 'brics',
+  'estados unidos', 'china', 'unión europea', 'fmi'
 ];
 
 // Targeted Google News OSINT topic feeds that update 24/7 with 100% reliable XML
 const STRATEGIC_LIVE_FEEDS: { country: CountryCode; pillar: StrategicPillar; name: string; url: string }[] = [
+  // Atlántico Sur & Antártida (Specific Dedicated Channels)
   {
     country: 'AR',
     pillar: 'DEFENSE_SECURITY',
-    name: 'OSINT Argentina (Defensa & Atlántico Sur)',
-    url: 'https://news.google.com/rss/search?q=argentina+(defensa+OR+"fuerzas+armadas"+OR+"atlantico+sur"+OR+radares+OR+soberania)&hl=es-419&gl=AR&ceid=AR:es-419'
+    name: 'OSINT Atlántico Sur & Soberanía Malvinas',
+    url: 'https://news.google.com/rss/search?q=("atlantico+sur"+OR+malvinas+OR+"falkland"+OR+"antartida"+OR+"pasaje+de+drake"+OR+"canal+beagle"+OR+"base+marambio"+OR+"tratado+antartico")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'OSINT Control Marítimo ZEE, Milla 201 & Pesca',
+    url: 'https://news.google.com/rss/search?q=("milla+201"+OR+"mar+argentino"+OR+"pesca+ilegal"+OR+"zona+economica+exclusiva"+OR+"prefectura+naval"+OR+"patrullero+oceanico"+OR+"armada+argentina")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'OSINT Polo Ushuaia, Magallanes & Antártida',
+    url: 'https://news.google.com/rss/search?q=("base+naval+ushuaia"+OR+"polo+logistico+antartico"+OR+"estrecho+de+magallanes"+OR+"rompehielos+irizar"+OR+"p-3+orion"+OR+"radares+tierra+del+fuego")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'REGIONAL',
+    pillar: 'ENERGY_INFRASTRUCTURE',
+    name: 'OSINT Sea Lion & Hidrocarburos Atlántico Sur',
+    url: 'https://news.google.com/rss/search?q=("Sea+Lion"+OR+"Navitas+Petroleum"+OR+"Rockhopper+Exploration"+OR+"Borders+and+Southern"+OR+"Falklands+oil"+OR+"Malvinas+petroleo"+OR+"offshore+energy")&hl=en&gl=US&ceid=US:en'
+  },
+  {
+    country: 'REGIONAL',
+    pillar: 'ECONOMY_COMMODITIES',
+    name: 'OSINT Pesca Atlántico Sur & FIFCA',
+    url: 'https://news.google.com/rss/search?q=("Falkland+Islands+fisheries"+OR+FIFCA+OR+"calamar+Loligo"+OR+"squid+fishery"+OR+"Milla+201"+OR+"pesca+ilegal+Malvinas")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+  {
+    country: 'AR',
+    pillar: 'GEOPOLITICS_DIPLOMACY',
+    name: 'OSINT Diplomacia Soberanía Malvinas & FCDO',
+    url: 'https://news.google.com/rss/search?q=("Cancilleria+Argentina"+OR+"FCDO"+OR+"Mount+Pleasant"+OR+"soberania+Malvinas"+OR+"Falklands+referendum")&hl=es-419&gl=AR&ceid=AR:es-419'
+  },
+
+  // Regional Pillars
+  {
+    country: 'AR',
+    pillar: 'DEFENSE_SECURITY',
+    name: 'OSINT Argentina (Defensa & Fuerzas Armadas)',
+    url: 'https://news.google.com/rss/search?q=argentina+(defensa+OR+"fuerzas+armadas"+OR+"armada+argentina"+OR+radares+OR+"fuerza+aerea"+OR+invap)&hl=es-419&gl=AR&ceid=AR:es-419'
   },
   {
     country: 'AR',
@@ -83,24 +187,52 @@ const STRATEGIC_LIVE_FEEDS: { country: CountryCode; pillar: StrategicPillar; nam
 function isContentStrategic(title: string, summary: string): boolean {
   const fullText = `${title} ${summary}`.toLowerCase();
   
-  const hasBlacklist = BLACKLISTED_TERMS.some(term => fullText.includes(term));
-  if (hasBlacklist) return false;
+  // 1. Strict blacklist rejection (sports, entertainment, petty crimes, lifestyle)
+  for (const term of BLACKLISTED_TERMS) {
+    if (fullText.includes(term)) {
+      return false;
+    }
+  }
 
-  return STRATEGIC_KEYWORDS.some(kw => fullText.includes(kw));
+  // 2. Primary strategic keyword verification
+  for (const kw of PRIMARY_STRATEGIC_TERMS) {
+    if (fullText.includes(kw)) {
+      return true;
+    }
+  }
+
+  // 3. Secondary contextual verification: requires co-occurrence of actor AND secondary term
+  const hasActor = GEOPOLITICAL_ACTORS.some(actor => fullText.includes(actor));
+  const hasSecondary = SECONDARY_TERMS.some(term => fullText.includes(term));
+  
+  return hasActor && hasSecondary;
 }
 
 function determinePillar(text: string, defaultPillar?: StrategicPillar): StrategicPillar {
   const t = text.toLowerCase();
-  if (t.includes('ciber') || t.includes('ransomware') || t.includes('hacker') || t.includes('malware')) {
+  if (t.includes('ciber') || t.includes('ransomware') || t.includes('hacker') || t.includes('malware') || t.includes('ciberdefensa')) {
     return 'CYBER_CRIME';
   }
-  if (t.includes('militar') || t.includes('armada') || t.includes('defensa') || t.includes('narcotráfico') || t.includes('policía') || t.includes('gendarmería') || t.includes('radar') || t.includes('frontera') || t.includes('pcc') || t.includes('senad')) {
+  if (
+    t.includes('militar') || t.includes('armada') || t.includes('defensa') || t.includes('narcotráfico') || 
+    t.includes('policía') || t.includes('gendarmería') || t.includes('radar') || t.includes('frontera') || 
+    t.includes('pcc') || t.includes('senad') || t.includes('atlántico sur') || t.includes('atlantico sur') ||
+    t.includes('malvinas') || t.includes('milla 201') || t.includes('pesca ilegal') || t.includes('prefectura')
+  ) {
     return 'DEFENSE_SECURITY';
   }
-  if (t.includes('gas') || t.includes('petróleo') || t.includes('hidroeléctrica') || t.includes('itaipú') || t.includes('itaipu') || t.includes('vaca muerta') || t.includes('gasoducto') || t.includes('dragado') || t.includes('puerto') || t.includes('represa') || t.includes('oleoducto') || t.includes('hidrovía') || t.includes('hidrovia')) {
+  if (
+    t.includes('gas') || t.includes('petróleo') || t.includes('hidroeléctrica') || t.includes('itaipú') || 
+    t.includes('itaipu') || t.includes('vaca muerta') || t.includes('gasoducto') || t.includes('dragado') || 
+    t.includes('puerto') || t.includes('represa') || t.includes('oleoducto') || t.includes('hidrovía') || t.includes('hidrovia')
+  ) {
     return 'ENERGY_INFRASTRUCTURE';
   }
-  if (t.includes('soja') || t.includes('cobre') || t.includes('litio') || t.includes('grano') || t.includes('banco central') || t.includes('exportación') || t.includes('commodit') || t.includes('divisas') || t.includes('mineral') || t.includes('codelco') || t.includes('minería')) {
+  if (
+    t.includes('soja') || t.includes('cobre') || t.includes('litio') || t.includes('grano') || 
+    t.includes('banco central') || t.includes('exportación') || t.includes('commodit') || t.includes('divisas') || 
+    t.includes('mineral') || t.includes('codelco') || t.includes('minería')
+  ) {
     return 'ECONOMY_COMMODITIES';
   }
   if (t.includes('clima') || t.includes('sequía') || t.includes('inundación') || t.includes('incendio') || t.includes('ambiental') || t.includes('bajante') || t.includes('caudal')) {
@@ -111,10 +243,18 @@ function determinePillar(text: string, defaultPillar?: StrategicPillar): Strateg
 
 function determineLevel(text: string): AlertLevel {
   const t = text.toLowerCase();
-  if (t.includes('urgente') || t.includes('alerta roja') || t.includes('ataque') || t.includes('incautación récord') || t.includes('toneladas') || t.includes('quiebre') || t.includes('bloqueo') || t.includes('emergencia')) {
+  if (
+    t.includes('urgente') || t.includes('alerta roja') || t.includes('ataque') || 
+    t.includes('incautación récord') || t.includes('toneladas') || t.includes('quiebre') || 
+    t.includes('bloqueo') || t.includes('emergencia') || t.includes('incursión')
+  ) {
     return 'CRITICAL';
   }
-  if (t.includes('alerta') || t.includes('acuerdo') || t.includes('tensión') || t.includes('negociación') || t.includes('litio') || t.includes('sanción') || t.includes('operativo') || t.includes('gasoducto') || t.includes('dragado')) {
+  if (
+    t.includes('alerta') || t.includes('acuerdo') || t.includes('tensión') || t.includes('negociación') || 
+    t.includes('litio') || t.includes('sanción') || t.includes('operativo') || t.includes('gasoducto') || 
+    t.includes('dragado') || t.includes('milla 201') || t.includes('pesca ilegal')
+  ) {
     return 'HIGH';
   }
   return 'MEDIUM';
@@ -134,7 +274,15 @@ function extractTags(text: string, country: CountryCode): string[] {
   if (lower.includes('frontera') || lower.includes('triple frontera')) tags.push('Seguridad Fronteriza');
   if (lower.includes('narcotráfico') || lower.includes('pcc')) tags.push('Crimen Organizado');
   if (lower.includes('puerto') || lower.includes('montevideo') || lower.includes('santos') || lower.includes('rosario')) tags.push('Puertos & Logística');
-  if (lower.includes('antártida') || lower.includes('atlántico')) tags.push('Atlántico Sur');
+  if (
+    lower.includes('antártida') || lower.includes('antartida') || lower.includes('atlántico') || 
+    lower.includes('atlantico') || lower.includes('malvinas') || lower.includes('milla 201') || 
+    lower.includes('mar argentino') || lower.includes('ushuaia') || lower.includes('magallanes')
+  ) {
+    tags.push('Atlántico Sur');
+  }
+  if (lower.includes('milla 201') || lower.includes('pesca ilegal') || lower.includes('agujero azul')) tags.push('Milla 201');
+  if (lower.includes('radar') || lower.includes('invap')) tags.push('Radares INVAP');
   if (lower.includes('banco central') || lower.includes('reservas') || lower.includes('divisas')) tags.push('Macroeconomía');
   if (lower.includes('gasoducto') || lower.includes('gas natural')) tags.push('Gasoductos');
   
@@ -201,7 +349,7 @@ async function fetchFeedContent(targetUrl: string): Promise<{ items: Partial<Int
     clearTimeout(timeoutId);
 
     if (res.ok) {
-      const text = await response.text();
+      const text = await res.text();
       if (text && (text.includes('<rss') || text.includes('<feed') || text.includes('<item') || text.includes('<entry>'))) {
         return text;
       }
@@ -223,6 +371,7 @@ function parseXmlFeed(
     const parser = new DOMParser();
     const doc = parser.parseFromString(xmlText, 'application/xml');
     
+    // Support both RSS 2.0 items and Atom entries
     const xmlItems = doc.querySelectorAll('item, entry');
 
     xmlItems.forEach((node, index) => {
@@ -235,6 +384,7 @@ function parseXmlFeed(
                  sourceInfo.url;
       const pubDate = node.querySelector('pubDate, updated, published, dc\\:date')?.textContent?.trim();
 
+      // For Google News feeds, the source is after the last hyphen (e.g. "Title - Clarín")
       let detectedSource = sourceInfo.name;
       if (rawTitle.includes(' - ')) {
         const parts = rawTitle.split(' - ');
@@ -244,6 +394,7 @@ function parseXmlFeed(
         }
       }
 
+      // Clean HTML tags and entities
       const cleanSummary = description
         .replace(/<[^>]*>?/gm, '')
         .replace(/&nbsp;/g, ' ')
@@ -253,6 +404,7 @@ function parseXmlFeed(
 
       if (!rawTitle || rawTitle.length < 10) return;
 
+      // Filter strategic relevance
       if (!isContentStrategic(rawTitle, cleanSummary)) {
         return;
       }
@@ -295,8 +447,10 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
   const newItems: IntelItem[] = [];
   let feedsChecked = 0;
 
+  // 1. Gather all feeds: Strategic Topic Feeds + Direct regional media RSS
   const allFeedsToQuery: { name: string; url: string; country: CountryCode; defaultPillar?: StrategicPillar }[] = [];
 
+  // Add the 8 high-reliability topic feeds
   STRATEGIC_LIVE_FEEDS.forEach(f => {
     allFeedsToQuery.push({
       name: f.name,
@@ -306,6 +460,7 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
     });
   });
 
+  // Add direct regional RSS sources
   REGIONAL_SOURCES.filter(s => !!s.rssUrl).forEach(s => {
     allFeedsToQuery.push({
       name: s.name,
@@ -314,6 +469,7 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
     });
   });
 
+  // Execute in parallel batches
   const fetchPromises = allFeedsToQuery.map(async (feed) => {
     try {
       const result = await fetchFeedContent(feed.url);
@@ -356,14 +512,17 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
 
   await Promise.allSettled(fetchPromises);
 
+  // If no new items obtained, return existing
   if (newItems.length === 0) {
     return { updatedItems: existingItems, newCount: 0, feedsChecked };
   }
 
+  // Deduplicate against existing items and within newly fetched items
   const seenTitles = new Set<string>();
   const merged: IntelItem[] = [];
   let addedCount = 0;
 
+  // Add new items first
   for (const item of newItems) {
     const key = item.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 35);
     const alreadyExists = existingItems.some(existing => 
@@ -377,6 +536,7 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
     }
   }
 
+  // Add existing items
   for (const item of existingItems) {
     const key = item.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 35);
     if (!seenTitles.has(key)) {
@@ -385,6 +545,7 @@ export async function syncClientFeeds(existingItems: IntelItem[]): Promise<{ upd
     }
   }
 
+  // Sort by timestamp descending (newest first)
   merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
   return {
