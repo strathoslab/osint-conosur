@@ -31,6 +31,10 @@ export const IntelItemDetailModal: React.FC<IntelItemDetailModalProps> = ({
   const pillar = PILLAR_INFO[item.pillar] || PILLAR_INFO.GEOPOLITICS_DIPLOMACY;
   const alertMeta = ALERT_LEVEL_INFO[item.level] || ALERT_LEVEL_INFO.ROUTINE;
 
+  const displaySource = item.source && (item.source.includes(' OR ') || item.source.startsWith('(') || item.source.includes('Google News'))
+    ? (item.source.replace(/\s*-\s*Google News.*$/i, '').replace(/["()]/g, '').slice(0, 40).trim() || 'OSINT Cono Sur')
+    : (item.source || 'OSINT Cono Sur');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
@@ -84,7 +88,7 @@ export const IntelItemDetailModal: React.FC<IntelItemDetailModalProps> = ({
             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400 mt-2.5">
               <span className="text-blue-400 font-semibold flex items-center gap-1">
                 <Radio className="w-3.5 h-3.5" />
-                {item.source}
+                {displaySource}
               </span>
               <span className="flex items-center gap-1 text-slate-400">
                 <Clock className="w-3.5 h-3.5" />
