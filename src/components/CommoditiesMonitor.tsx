@@ -25,6 +25,10 @@ interface CommoditiesMonitorProps {
   onSelectIntelItem: (item: IntelItem) => void;
   onNavigateToWireWithFilter?: (keyword: string) => void;
   onGenerateReport?: (reportType: any, countries: CountryCode[], prompt?: string) => void;
+  onRefreshCommodities?: () => Promise<void> | void;
+  isRefreshing?: boolean;
+  lastUpdated?: string;
+  marketStatus?: string;
 }
 
 const CATEGORY_NAMES: Record<CommodityCategory, { label: string; icon: string; color: string }> = {
@@ -50,11 +54,22 @@ export const CommoditiesMonitor: React.FC<CommoditiesMonitorProps> = ({
   onSelectIntelItem,
   onNavigateToWireWithFilter,
   onGenerateReport,
+  onRefreshCommodities,
+  isRefreshing = false,
+  lastUpdated,
+  marketStatus = 'LIVE // CBOT · LME · NYMEX · ROSARIO · SGX',
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<CommodityCategory | 'ALL'>('ALL');
   const [selectedCountry, setSelectedCountry] = useState<CountryCode | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeCommodityModal, setActiveCommodityModal] = useState<CommodityItem | null>(null);
+
+  // Key commodities for high-level strategic overview
+  const soja = useMemo(() => commodities.find(c => c.id === 'commodity-soja'), [commodities]);
+  const cobre = useMemo(() => commodities.find(c => c.id === 'commodity-cobre'), [commodities]);
+  const litio = useMemo(() => commodities.find(c => c.id === 'commodity-litio'), [commodities]);
+  const wti = useMemo(() => commodities.find(c => c.id === 'commodity-petroleo-wti'), [commodities]);
+  const gas = useMemo(() => commodities.find(c => c.id === 'commodity-gas-natural'), [commodities]);
 
   // Filtered commodities
   const filteredCommodities = useMemo(() => {
@@ -169,8 +184,21 @@ export const CommoditiesMonitor: React.FC<CommoditiesMonitorProps> = ({
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions & Live Market Status */}
           <div className="flex items-center gap-2 flex-wrap">
+            {onRefreshCommodities && (
+              <button
+                onClick={() => onRefreshCommodities()}
+                disabled={isRefreshing}
+                id="btn-refresh-commodities"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 hover:border-slate-600 transition-all disabled:opacity-50 shadow-sm"
+                title="Sincronizar cotizaciones en vivo con CBOT, COMEX, NYMEX y mercados regionales"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-400' : 'text-slate-400'}`} />
+                <span>{isRefreshing ? 'Sincronizando...' : 'Actualizar Precios'}</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 if (onGenerateReport) {
@@ -190,41 +218,82 @@ export const CommoditiesMonitor: React.FC<CommoditiesMonitorProps> = ({
           </div>
         </div>
 
-        {/* Strategic Overview Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-800">
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
+        {/* Live Market Status & Sync Metadata Bar */}
+        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mt-4 pt-3 border-t border-slate-800/80">
+          <div className="flex items-center space-x-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-semibold text-slate-300">{marketStatus}</span>
+          </div>
+          {lastUpdated && (
+            <div className="text-slate-400 text-[10px]">
+              Última cotización:{' '}
+              <span className="text-slate-300 font-semibold">
+                {new Date(lastUpdated).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Strategic Overview Metrics (Dynamic from live feed) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors">
             <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between">
               <span>AGROEXPORTACIÓN</span>
               <span>🌾</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-white mt-1">Soja: $442.80 <span className="text-xs text-emerald-400 font-semibold">+1.35%</span></div>
+            <div className="text-base sm:text-lg font-bold text-white mt-1">
+              Soja: ${soja?.price != null ? soja.price.toFixed(2) : '482.00'}{' '}
+              <span className={`text-xs font-semibold ${(soja?.change24h ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {(soja?.change24h ?? 0) >= 0 ? '+' : ''}{(soja?.change24h ?? 0).toFixed(2)}%
+              </span>
+            </div>
             <div className="text-[10px] text-slate-400 mt-0.5 truncate">FOB Rosario & Paranaguá // Hidrovía</div>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
+          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors">
             <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between">
               <span>METALES CRÍTICOS</span>
               <span>⛏️</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-white mt-1">Cobre: $4.42 <span className="text-xs text-emerald-400 font-semibold">+2.15%</span></div>
-            <div className="text-[10px] text-slate-400 mt-0.5 truncate">LME / Codelco Chile // Litio $11.9k</div>
+            <div className="text-base sm:text-lg font-bold text-white mt-1">
+              Cobre: ${cobre?.price != null ? cobre.price.toFixed(2) : '6.79'}{' '}
+              <span className={`text-xs font-semibold ${(cobre?.change24h ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {(cobre?.change24h ?? 0) >= 0 ? '+' : ''}{(cobre?.change24h ?? 0).toFixed(2)}%
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5 truncate">
+              COMEX / Chile // Litio ${litio?.price ? `${(litio.price / 1000).toFixed(1)}k` : '11.9k'}
+            </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
+          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors">
             <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between">
               <span>ENERGÍA REGIONAL</span>
               <span>⚡</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-white mt-1">WTI: $79.15 <span className="text-xs text-red-400 font-semibold">-1.20%</span></div>
+            <div className="text-base sm:text-lg font-bold text-white mt-1">
+              WTI: ${wti?.price != null ? wti.price.toFixed(2) : '93.44'}{' '}
+              <span className={`text-xs font-semibold ${(wti?.change24h ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {(wti?.change24h ?? 0) >= 0 ? '+' : ''}{(wti?.change24h ?? 0).toFixed(2)}%
+              </span>
+            </div>
             <div className="text-[10px] text-slate-400 mt-0.5 truncate">Vaca Muerta & Pre-Sal Brasil</div>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
+          <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors">
             <div className="text-[11px] font-mono text-slate-400 flex items-center justify-between">
               <span>GAS & INTEGRACIÓN</span>
               <span>🔥</span>
             </div>
-            <div className="text-base sm:text-lg font-bold text-white mt-1">Gas: $2.88 <span className="text-xs text-emerald-400 font-semibold">+2.85%</span></div>
+            <div className="text-base sm:text-lg font-bold text-white mt-1">
+              Gas: ${gas?.price != null ? gas.price.toFixed(2) : '2.86'}{' '}
+              <span className={`text-xs font-semibold ${(gas?.change24h ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {(gas?.change24h ?? 0) >= 0 ? '+' : ''}{(gas?.change24h ?? 0).toFixed(2)}%
+              </span>
+            </div>
             <div className="text-[10px] text-slate-400 mt-0.5 truncate">Reversión Norte / Gasbol AR-BO-BR</div>
           </div>
         </div>
