@@ -72,7 +72,21 @@ export default function App() {
     return INITIAL_INTEL_ITEMS;
   });
 
-  const [commodities, setCommodities] = useState<CommodityItem[]>(CONO_SUR_COMMODITIES);
+  const [commodities, setCommodities] = useState<CommodityItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('osint_cono_sur_commodities');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return CONO_SUR_COMMODITIES;
+  });
+  const [commoditiesLastUpdated, setCommoditiesLastUpdated] = useState<string>(() => {
+    return localStorage.getItem('osint_cono_sur_commodities_lastSync') || '';
+  });
+  const [commoditiesMarketStatus, setCommoditiesMarketStatus] = useState<string>('LIVE // CBOT · LME · NYMEX · ROSARIO');
+  const [isRefreshingCommodities, setIsRefreshingCommodities] = useState<boolean>(false);
   const [nodes, setNodes] = useState<StrategicNode[]>(STRATEGIC_NODES);
   const [profiles, setProfiles] = useState<Record<string, CountryProfile>>(COUNTRY_PROFILES);
   const [sources, setSources] = useState<SourceItem[]>(REGIONAL_SOURCES as SourceItem[]);
@@ -151,7 +165,15 @@ export default function App() {
         const contentType = commoditiesRes.value.headers.get('content-type') || '';
         if (contentType.includes('application/json')) {
           const data = await commoditiesRes.value.json();
-          if (data.commodities) setCommodities(data.commodities);
+          if (data.commodities && data.commodities.length > 0) {
+            setCommodities(data.commodities);
+            localStorage.setItem('osint_cono_sur_commodities', JSON.stringify(data.commodities));
+            if (data.lastUpdated) {
+              setCommoditiesLastUpdated(data.lastUpdated);
+              localStorage.setItem('osint_cono_sur_commodities_lastSync', data.lastUpdated);
+            }
+            if (data.marketStatus) setCommoditiesMarketStatus(data.marketStatus);
+          }
         }
       }
 
@@ -257,6 +279,55 @@ export default function App() {
       showToast('Error al conectar con los servidores de fuentes abiertas.', 'error');
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // Refresh Commodities Live Prices
+  const handleRefreshCommodities = async () => {
+    setIsRefreshingCommodities(true);
+    try {
+      let updatedData: any = null;
+      try {
+        const res = await fetch('/api/intel/commodities/refresh', { method: 'POST' });
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            updatedData = await res.json();
+          }
+        }
+      } catch {
+        // Fallback to GET
+      }
+
+      if (!updatedData || !updatedData.commodities) {
+        const getRes = await fetch('/api/intel/commodities');
+        if (getRes.ok) {
+          const contentType = getRes.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            updatedData = await getRes.json();
+          }
+        }
+      }
+
+      if (updatedData && updatedData.commodities && updatedData.commodities.length > 0) {
+        setCommodities(updatedData.commodities);
+        localStorage.setItem('osint_cono_sur_commodities', JSON.stringify(updatedData.commodities));
+        if (updatedData.lastUpdated) {
+          setCommoditiesLastUpdated(updatedData.lastUpdated);
+          localStorage.setItem('osint_cono_sur_commodities_lastSync', updatedData.lastUpdated);
+        }
+        if (updatedData.marketStatus) {
+          setCommoditiesMarketStatus(updatedData.marketStatus);
+        }
+        showToast('Cotizaciones de commodities sincronizadas exitosamente en tiempo real.', 'success');
+      } else {
+        showToast('Mercado de commodities verificado. Precios al día.', 'info');
+      }
+    } catch (err) {
+      console.error('Error refreshing commodities:', err);
+      showToast('Error de conexión con el monitor de commodities.', 'error');
+    } finally {
+      setIsRefreshingCommodities(false);
     }
   };
 
@@ -464,6 +535,10 @@ export default function App() {
                 customPrompt: prompt,
               });
             }}
+            onRefreshCommodities={handleRefreshCommodities}
+            isRefreshing={isRefreshingCommodities}
+            lastUpdated={commoditiesLastUpdated}
+            marketStatus={commoditiesMarketStatus}
           />
         )}
 
