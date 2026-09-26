@@ -6,10 +6,19 @@ import { intelCollector } from './server/feedCollector.js';
 import { REGIONAL_SOURCES } from './server/sourcesConfig.js';
 import { STRATEGIC_NODES, COUNTRY_PROFILES } from './server/seedData.js';
 import { CONO_SUR_COMMODITIES } from './server/commoditiesData.js';
+import { commoditiesService } from './server/commoditiesService.js';
 import { generateStrategicReport, askIntelAnalyst } from './server/geminiService.js';
 import { CountryCode, StrategicPillar, AlertLevel, CommodityCategory } from './src/types.js';
 
 dotenv.config();
+
+process.on('uncaughtException', (err) => {
+  console.error('[Server Uncaught Exception]:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Server Unhandled Rejection]:', reason);
+});
 
 async function startServer() {
   const app = express();
@@ -121,7 +130,7 @@ async function startServer() {
 
   // Commodities & Strategic Resources Monitor
   app.get('/api/intel/commodities', (req, res) => {
-    let commodities = [...CONO_SUR_COMMODITIES];
+    let commodities = [...commoditiesService.getCommodities()];
     const { category, country, search } = req.query;
 
     if (category && category !== 'ALL') {
@@ -144,9 +153,24 @@ async function startServer() {
     res.json({
       commodities,
       total: commodities.length,
-      lastUpdated: new Date().toISOString(),
-      marketStatus: 'OPEN // ROTTERDAM / CBOT / LME / ROSARIO'
+      lastUpdated: commoditiesService.getLastSyncTime(),
+      marketStatus: 'LIVE // CBOT · LME · NYMEX · ROSARIO · SGX'
     });
+  });
+
+  // Force live price refresh
+  app.post('/api/intel/commodities/refresh', async (req, res) => {
+    try {
+      const result = await commoditiesService.refreshLivePrices(true);
+      res.json({
+        ...result,
+        commodities: commoditiesService.getCommodities(),
+        marketStatus: 'LIVE // CBOT · LME · NYMEX · ROSARIO · SGX'
+      });
+    } catch (error: any) {
+      console.error('Error refreshing commodities:', error);
+      res.status(500).json({ error: error.message || 'Error updating commodities' });
+    }
   });
 
   // Country Profiles & Risk Matrix
@@ -236,7 +260,10 @@ async function startServer() {
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: false,
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -253,4 +280,7 @@ async function startServer() {
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error('[Fatal Error] Failed to start server:', err);
+  process.exit(1);
+});
